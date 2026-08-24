@@ -231,7 +231,7 @@ export default function GarcomNovoPedidoPage() {
                         >
                           −
                         </button>
-                        <span className="text-sm font-semibold w-6 text-center">
+                        <span className="text-sm font-semibold w-6 text-center text-gray-500">
                           {item.quantity}
                         </span>
                         <button

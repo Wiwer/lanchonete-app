@@ -184,18 +184,18 @@ export default function GarcomAdicionarItensPage() {
             🍽️ Itens já na comanda
           </h2>
           {orderItems.length === 0 ? (
-            <p className="text-gray-500 text-sm">Nenhum item ainda.</p>
+            <p className="text-gray-900 text-sm">Nenhum item ainda.</p>
           ) : (
             <ul className="divide-y divide-gray-200">
               {orderItems.map((item) => (
-                <li key={item.id} className="py-2 flex justify-between items-center text-sm">
+                <li key={item.id} className="py-2 flex justify-between items-center text-gray-900 text-sm">
                   <span>{item.quantity}x {item.product.name}</span>
-                  <span className="font-medium text-gray-700">
+                  <span className="font-medium text-gray-900">
                     R$ {(item.quantity * item.unitPrice).toFixed(2)}
                   </span>
                 </li>
               ))}
-              <li className="pt-2 font-semibold flex justify-between text-sm">
+              <li className="pt-2 font-semibold flex justify-between text-sm ">
                 <span>Total atual</span>
                 <span className="text-green-700">R$ {totalPedido.toFixed(2)}</span>
               </li>

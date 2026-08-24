@@ -104,13 +104,13 @@ export default function GarcomPedidoPage() {
 
         {/* Corpo */}
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">🛒 Itens consumidos</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">🛒 Itens consumidos</h2>
           {order.items.length === 0 ? (
             <p className="text-gray-500 text-center py-8">Nenhum item consumido ainda.</p>
           ) : (
             <ul className="divide-y divide-gray-200">
               {order.items.map((item) => (
-                <li key={item.id} className="py-3 flex justify-between items-center">
+                <li key={item.id} className="py-3 flex justify-between items-center text-gray-700">
                   <span>{item.quantity}x {item.product.name}</span>
                   <span className="font-bold text-green-600">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
                 </li>
@@ -118,7 +118,7 @@ export default function GarcomPedidoPage() {
             </ul>
           )}
           <div className="mt-6 border-t pt-4 flex justify-between items-center">
-            <span className="text-lg font-semibold">Total:</span>
+            <span className="text-lg font-semibold text-green-700">Total:</span>
             <span className="text-2xl font-bold text-green-700">R$ {order.total.toFixed(2)}</span>
           </div>
 

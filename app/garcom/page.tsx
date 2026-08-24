@@ -70,7 +70,7 @@ export default async function GarcomPage() {
                     )}
                   </div>
                   {occupied && order && (
-                    <div className="mt-1 text-xs text-gray-500">
+                    <div className="mt-1 text-xs text-gray-900">
                       Total: R$ {order.total.toFixed(2)}
                     </div>
                   )}

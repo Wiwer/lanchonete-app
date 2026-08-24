@@ -119,7 +119,7 @@ export default function ComandaModal({ order }: ComandaModalProps) {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-4 pt-4 border-t-2 border-gray-300 flex justify-between text-lg font-bold">
+                <div className="mt-4 pt-4 border-t-2 border-gray-300 flex justify-between text-lg font-bold text-green-800">
                   <span>Total</span>
                   <span>R$ {order.total.toFixed(2)}</span>
                 </div>
