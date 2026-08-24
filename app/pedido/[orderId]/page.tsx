@@ -1,10 +1,9 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 import Link from 'next/link'
-
 import AddItemButton from './components/AddItemButton'
 import FecharContaButton from './components/FecharContaButton'
-import RemoveItemButton from './components/RemoveItemButton'
+import RemoveItemButton from './components/RemoveItemButton'  // <-- importado
 import TransferirMesaButton from './components/TransferirMesaButton'
 import CancelarAberturaButton from './components/CancelarAberturaButton'
 import ComandaModal from '@/app/components/ComandaModal'
@@ -99,7 +98,7 @@ export default async function PedidoPage({
             </ul>
           </div>
 
-          {/* Itens consumidos e ações */}
+          {/* Itens consumidos */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">🛒 Itens consumidos</h2>
             {order.items.length === 0 ? (
@@ -109,7 +108,19 @@ export default async function PedidoPage({
                 {order.items.map((item) => (
                   <li key={item.id} className="py-3 flex justify-between items-center">
                     <span>{item.quantity}x {item.product.name}</span>
-                    <span className="font-bold text-green-600">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-green-600">
+                        R$ {(item.quantity * item.unitPrice).toFixed(2)}
+                      </span>
+                      {/* Botão de remover – apenas se pedido estiver aberto */}
+                      {order.status === 'OPEN' && (
+                        <RemoveItemButton
+                          orderId={order.id}
+                          itemId={item.id}
+                          quantity={item.quantity}
+                        />
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
