@@ -7,6 +7,7 @@ import FecharContaButton from './components/FecharContaButton'
 import RemoveItemButton from './components/RemoveItemButton'
 import TransferirMesaButton from './components/TransferirMesaButton'
 import CancelarAberturaButton from './components/CancelarAberturaButton'
+import ImprimirButton from '@/app/components/ImprimirButton'
 
 const adapter = new PrismaBetterSqlite3({
   url: `file:${process.cwd()}/dev.db`,
@@ -33,7 +34,7 @@ export default async function PedidoPage({
   })
 
   const products = await prisma.product.findMany({
-    where: { active: true }, // <-- adicionar este filtro
+    where: { active: true },
     orderBy: { name: 'asc' },
   })
 
@@ -48,130 +49,100 @@ export default async function PedidoPage({
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Cabeçalho do pedido */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-800">
-              🍽️ Mesa {order.table.number} - Pedido #{order.id.slice(0, 6)}
-            </h1>
-            <Link href="/mesas" className="text-blue-600 hover:text-blue-800">
-              ← Voltar às mesas
-            </Link>
+        {/* Cabeçalho com botão de impressão */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6 no-print">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-gray-800">
+                🍽️ Mesa {order.table.number} - Pedido #{order.id.slice(0, 6)}
+              </h1>
+              <span
+                className={`inline-block text-sm font-semibold px-3 py-1 rounded-full ${
+                  order.status === 'OPEN'
+                    ? 'bg-green-100 text-green-700'
+                    : order.status === 'WAITING_PAYMENT'
+                    ? 'bg-yellow-100 text-yellow-700'
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {order.status === 'OPEN' && '🟢 Aberto'}
+                {order.status === 'WAITING_PAYMENT' && '🟡 Aguardando pagamento'}
+                {order.status === 'CLOSED' && '🔒 Fechado'}
+              </span>
+            </div>
+            <div className="flex gap-3">
+              <ImprimirButton />  {/* substitui o botão antigo */}
+              <Link href="/mesas" className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium">
+                ← Voltar às mesas
+              </Link>
+            </div>
+
           </div>
-          <div className="mt-2">
-  <span
-    className={`inline-block text-sm font-semibold px-3 py-1 rounded-full ${
-      order.status === 'OPEN'
-        ? 'bg-green-100 text-green-700'
-        : order.status === 'WAITING_PAYMENT'
-        ? 'bg-yellow-100 text-yellow-700'
-        : 'bg-gray-100 text-gray-700'
-    }`}
-  >
-    {order.status === 'OPEN' && '🟢 Aberto'}
-    {order.status === 'WAITING_PAYMENT' && '🟡 Aguardando pagamento'}
-    {order.status === 'CLOSED' && '🔒 Fechado'}
-  </span>
-</div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Cardápio */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">
-              📋 Cardápio
-            </h2>
+          {/* Cardápio - Admin (no-print) */}
+          <div className="bg-white rounded-xl shadow-md p-6 no-print">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">📋 Cardápio</h2>
             <ul className="divide-y divide-gray-200">
               {products.map((product) => (
-                <li
-                  key={product.id}
-                  className="py-3 flex justify-between items-center"
-                >
+                <li key={product.id} className="py-3 flex justify-between items-center">
                   <div>
-                    <span className="font-medium text-gray-800">
-                      {product.name}
-                    </span>
-                    <span className="ml-2 text-sm text-gray-500">
-                      R$ {product.price.toFixed(2)}
-                    </span>
+                    <span className="font-medium text-gray-800">{product.name}</span>
+                    <span className="ml-2 text-sm text-gray-500">R$ {product.price.toFixed(2)}</span>
                   </div>
-                  <AddItemButton
-                    orderId={order.id}
-                    productId={product.id}
-                    productName={product.name}
-                  />
+                  <AddItemButton orderId={order.id} productId={product.id} productName={product.name} />
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Itens consumidos (VERSÃO MELHORADA) */}
+          {/* COMANDA - Esta seção será impressa */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">
-              🛒 Itens consumidos
-            </h2>
-            {order.items.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                Nenhum item consumido ainda.
-              </p>
-            ) : (
-              <ul className="divide-y divide-gray-200">
-                {order.items.map((item) => (
-                  <li
-                    key={item.id}
-                    className="py-4 hover:bg-gray-50 transition-colors rounded-lg px-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {/* Badge com quantidade */}
-                        <span className="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full min-w-[32px] text-center">
-                          {item.quantity}
-                        </span>
-                        <span className="font-medium text-gray-800">
-                          {item.product.name}
-                        </span>
-                        <span className="text-sm text-gray-400">
-                          R$ {item.unitPrice.toFixed(2)} cada
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg font-bold text-green-700">
-                          R$ {(item.quantity * item.unitPrice).toFixed(2)}
-                        </span>
-                        <RemoveItemButton
-                          orderId={order.id}
-                          itemId={item.id}
-                          quantity={item.quantity}
-                        />
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <div id="comanda">
+              <div className="comanda-header">
+                <h2>🍽️ COMANDA</h2>
+                <p>Mesa {order.table.number}</p>
+                <p>Pedido #{order.id.slice(0, 8)}</p>
+                <p>{new Date(order.createdAt).toLocaleString('pt-BR')}</p>
+                <p className="text-sm text-gray-500">Status: {order.status === 'OPEN' ? 'Aberto' : order.status === 'WAITING_PAYMENT' ? 'Aguardando Pagamento' : 'Fechado'}</p>
+              </div>
 
-            <div className="mt-6 border-t pt-4 flex justify-between items-center">
-              <span className="text-lg font-semibold">Total:</span>
-              <span className="text-2xl font-bold text-green-700">
-                R$ {order.total.toFixed(2)}
-              </span>
+              {order.items.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">Nenhum item consumido ainda.</p>
+              ) : (
+                <>
+                  <ul>
+                    {order.items.map((item) => (
+                      <li key={item.id} className="comanda-item">
+                        <span>{item.quantity}x {item.product.name}</span>
+                        <span>R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="comanda-total">
+                    <span>Total</span>
+                    <span>R$ {order.total.toFixed(2)}</span>
+                  </div>
+                </>
+              )}
+              <div className="comanda-rodape">
+                Obrigado pela preferência!
+              </div>
             </div>
 
-            <FecharContaButton orderId={order.id} total={order.total} />
-          <TransferirMesaButton
-  orderId={order.id}
-  currentTableNumber={order.table.number}
-/>
-          <CancelarAberturaButton
-            orderId={order.id}
-            tableNumber={order.table.number}
-            disabled={order.items.length > 0} // <-- isso faz o botão sumir quando há itens
-          />
-          </div>
-        </div>
+            {/* Botões de ação (não imprimem) */}
+            <div className="mt-6 border-t pt-4 no-print">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-semibold">Total:</span>
+                <span className="text-2xl font-bold text-green-700">R$ {order.total.toFixed(2)}</span>
+              </div>
 
-        <div className="mt-8 text-center text-sm text-gray-400">
-          ✅ Check-point 4: Adição de itens ao pedido
+              <FecharContaButton orderId={order.id} total={order.total} />
+              <TransferirMesaButton orderId={order.id} currentTableNumber={order.table.number} />
+              <CancelarAberturaButton orderId={order.id} tableNumber={order.table.number} disabled={order.items.length > 0} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
