@@ -1,11 +1,10 @@
-// app/garcom/pedido/[orderId]/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
-import ImprimirButton from '@/app/components/ImprimirButton'
+import ModalComanda from '@/app/components/ModalComanda'
 
 interface OrderItem {
   id: string
@@ -74,7 +73,6 @@ export default function GarcomPedidoPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-3xl mx-auto">
-        {/* Cabeçalho com botão de impressão */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6 no-print">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
@@ -96,7 +94,14 @@ export default function GarcomPedidoPage() {
               </span>
             </div>
             <div className="flex gap-3">
-              <ImprimirButton />
+              <ModalComanda
+                orderId={order.id}
+                tableNumber={order.table.number}
+                items={order.items}
+                total={order.total}
+                createdAt={order.createdAt}
+                status={order.status}
+              />
               <Link
                 href="/garcom"
                 className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium"
@@ -107,45 +112,32 @@ export default function GarcomPedidoPage() {
           </div>
         </div>
 
-        {/* COMANDA - Esta seção será impressa */}
+        {/* Lista de itens consumidos (versão simplificada para o garçom) */}
         <div className="bg-white rounded-xl shadow-md p-6">
-          <div id="comanda">
-            <div className="comanda-header">
-              <h2>🍽️ COMANDA</h2>
-              <p>Mesa {order.table.number}</p>
-              <p>Pedido #{order.id.slice(0, 8)}</p>
-              <p>{new Date(order.createdAt).toLocaleString('pt-BR')}</p>
-              <p className="text-sm text-gray-500">Status: {order.status === 'OPEN' ? 'Aberto' : order.status === 'WAITING_PAYMENT' ? 'Aguardando Pagamento' : 'Fechado'}</p>
-            </div>
-
-            {order.items.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">Nenhum item consumido ainda.</p>
-            ) : (
-              <>
-                <ul>
-                  {order.items.map((item) => (
-                    <li key={item.id} className="comanda-item">
-                      <span>{item.quantity}x {item.product.name}</span>
-                      <span>R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="comanda-total">
-                  <span>Total</span>
-                  <span>R$ {order.total.toFixed(2)}</span>
-                </div>
-              </>
-            )}
-            <div className="comanda-rodape">
-              Obrigado pela preferência!
-            </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">🛒 Itens consumidos</h2>
+          {order.items.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">Nenhum item consumido ainda.</p>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {order.items.map((item) => (
+                <li key={item.id} className="flex justify-between py-3">
+                  <span>
+                    <span className="font-medium">{item.quantity}x</span> {item.product.name}
+                  </span>
+                  <span className="font-medium text-green-700">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-6 border-t pt-4 flex justify-between items-center">
+            <span className="text-lg font-semibold">Total</span>
+            <span className="text-2xl font-bold text-green-700">R$ {order.total.toFixed(2)}</span>
           </div>
 
-          {/* Botão de adicionar itens (não imprime) */}
-          <div className="mt-6 pt-4 border-t no-print">
+          <div className="mt-6 no-print">
             <Link
               href={`/garcom/pedido/${order.id}/adicionar`}
-              className="w-full block text-center py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
+              className="block w-full text-center py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
             >
               + Adicionar Itens
             </Link>

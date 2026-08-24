@@ -7,7 +7,7 @@ import FecharContaButton from './components/FecharContaButton'
 import RemoveItemButton from './components/RemoveItemButton'
 import TransferirMesaButton from './components/TransferirMesaButton'
 import CancelarAberturaButton from './components/CancelarAberturaButton'
-import ImprimirButton from '@/app/components/ImprimirButton'
+import ModalComanda from '@/app/components/ModalComanda'
 
 const adapter = new PrismaBetterSqlite3({
   url: `file:${process.cwd()}/dev.db`,
@@ -49,7 +49,7 @@ export default async function PedidoPage({
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Cabeçalho com botão de impressão */}
+        {/* Cabeçalho com modal de impressão */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6 no-print">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
@@ -71,19 +71,25 @@ export default async function PedidoPage({
               </span>
             </div>
             <div className="flex gap-3">
-              <ImprimirButton />  {/* substitui o botão antigo */}
+              <ModalComanda
+                orderId={order.id}
+                tableNumber={order.table.number}
+                items={order.items}
+                total={order.total}
+                createdAt={order.createdAt}
+                status={order.status}
+              />
               <Link href="/mesas" className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium">
                 ← Voltar às mesas
               </Link>
             </div>
-
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Cardápio - Admin (no-print) */}
           <div className="bg-white rounded-xl shadow-md p-6 no-print">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">📋 Cardápio</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">📋 Cardápio</h2>
             <ul className="divide-y divide-gray-200">
               {products.map((product) => (
                 <li key={product.id} className="py-3 flex justify-between items-center">
@@ -97,47 +103,44 @@ export default async function PedidoPage({
             </ul>
           </div>
 
-          {/* COMANDA - Esta seção será impressa */}
+          {/* Itens consumidos */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            <div id="comanda">
-              <div className="comanda-header">
-                <h2>🍽️ COMANDA</h2>
-                <p>Mesa {order.table.number}</p>
-                <p>Pedido #{order.id.slice(0, 8)}</p>
-                <p>{new Date(order.createdAt).toLocaleString('pt-BR')}</p>
-                <p className="text-sm text-gray-500">Status: {order.status === 'OPEN' ? 'Aberto' : order.status === 'WAITING_PAYMENT' ? 'Aguardando Pagamento' : 'Fechado'}</p>
-              </div>
-
-              {order.items.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">Nenhum item consumido ainda.</p>
-              ) : (
-                <>
-                  <ul>
-                    {order.items.map((item) => (
-                      <li key={item.id} className="comanda-item">
-                        <span>{item.quantity}x {item.product.name}</span>
-                        <span>R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="comanda-total">
-                    <span>Total</span>
-                    <span>R$ {order.total.toFixed(2)}</span>
-                  </div>
-                </>
-              )}
-              <div className="comanda-rodape">
-                Obrigado pela preferência!
-              </div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">🛒 Itens consumidos</h2>
+            {order.items.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Nenhum item consumido ainda.</p>
+            ) : (
+              <ul className="divide-y divide-gray-200">
+                {order.items.map((item) => (
+                  <li
+                    key={item.id}
+                    className="py-4 hover:bg-gray-50 transition-colors rounded-lg px-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full min-w-[32px] text-center">
+                          {item.quantity}
+                        </span>
+                        <span className="font-medium text-gray-800">{item.product.name}</span>
+                        <span className="text-sm text-gray-400">R$ {item.unitPrice.toFixed(2)} cada</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-bold text-green-700">
+                          R$ {(item.quantity * item.unitPrice).toFixed(2)}
+                        </span>
+                        <RemoveItemButton orderId={order.id} itemId={item.id} quantity={item.quantity} />
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-6 border-t pt-4 flex justify-between items-center">
+              <span className="text-lg font-semibold">Total:</span>
+              <span className="text-2xl font-bold text-green-700">R$ {order.total.toFixed(2)}</span>
             </div>
 
-            {/* Botões de ação (não imprimem) */}
-            <div className="mt-6 border-t pt-4 no-print">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-lg font-semibold">Total:</span>
-                <span className="text-2xl font-bold text-green-700">R$ {order.total.toFixed(2)}</span>
-              </div>
-
+            {/* Botões de ação (no-print) */}
+            <div className="mt-6 space-y-2 no-print">
               <FecharContaButton orderId={order.id} total={order.total} />
               <TransferirMesaButton orderId={order.id} currentTableNumber={order.table.number} />
               <CancelarAberturaButton orderId={order.id} tableNumber={order.table.number} disabled={order.items.length > 0} />
