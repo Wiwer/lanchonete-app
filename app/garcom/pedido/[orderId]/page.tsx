@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+
 import { useToast } from '@/app/context/ToastContext'
 import ComandaModal from '@/app/components/ComandaModal'
 
@@ -10,18 +11,14 @@ interface OrderItem {
   id: string
   quantity: number
   unitPrice: number
-  product: {
-    name: string
-  }
+  product: { name: string }
 }
 
 interface Order {
   id: string
   total: number
   createdAt: string
-  table: {
-    number: number
-  }
+  table: { number: number }
   items: OrderItem[]
   status: string
 }
@@ -72,6 +69,7 @@ export default function GarcomPedidoPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-3xl mx-auto">
+        {/* Cabeçalho */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6 no-print">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
@@ -104,6 +102,7 @@ export default function GarcomPedidoPage() {
           </div>
         </div>
 
+        {/* Corpo */}
         <div className="bg-white rounded-xl shadow-md p-6">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">🛒 Itens consumidos</h2>
           {order.items.length === 0 ? (

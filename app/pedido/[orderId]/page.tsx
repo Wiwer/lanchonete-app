@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 import Link from 'next/link'
+
 import AddItemButton from './components/AddItemButton'
 import FecharContaButton from './components/FecharContaButton'
 import RemoveItemButton from './components/RemoveItemButton'
@@ -48,6 +49,7 @@ export default async function PedidoPage({
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
+        {/* Cabeçalho */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6 no-print">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
@@ -70,7 +72,10 @@ export default async function PedidoPage({
             </div>
             <div className="flex gap-3">
               <ComandaModal order={order} />
-              <Link href="/mesas" className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium">
+              <Link
+                href="/mesas"
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium"
+              >
                 ← Voltar às mesas
               </Link>
             </div>
@@ -78,6 +83,7 @@ export default async function PedidoPage({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Cardápio */}
           <div className="bg-white rounded-xl shadow-md p-6 no-print">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">📋 Cardápio</h2>
             <ul className="divide-y divide-gray-200">
@@ -93,6 +99,7 @@ export default async function PedidoPage({
             </ul>
           </div>
 
+          {/* Itens consumidos e ações */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">🛒 Itens consumidos</h2>
             {order.items.length === 0 ? (

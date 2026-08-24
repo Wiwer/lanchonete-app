@@ -54,14 +54,19 @@ body {
   animation-name: slideInFromBottom;
 }
 
-/* --- ESTILOS PARA IMPRESSÃO (não usa mais o modal, mas mantido para fallback) --- */
+/* ============================== */
+/*          IMPRESSÃO             */
+/* ============================== */
 @media print {
   body * {
     visibility: hidden;
   }
-  #comanda-modal, #comanda-modal * {
+
+  #comanda-modal,
+  #comanda-modal * {
     visibility: visible;
   }
+
   #comanda-modal {
     position: absolute;
     left: 0;
@@ -72,9 +77,11 @@ body {
     color: black;
     font-size: 14px;
   }
+
   .no-print {
     display: none !important;
   }
+
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;

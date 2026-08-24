@@ -73,15 +73,18 @@ export default function ComandaModal({ order }: ComandaModalProps) {
     win.close()
   }
 
+  const openModal = () => {
+    document.getElementById('comanda-modal')?.classList.remove('hidden')
+  }
+
+  const closeModal = () => {
+    document.getElementById('comanda-modal')?.classList.add('hidden')
+  }
+
   return (
     <>
       <button
-        onClick={() => {
-          const modal = document.getElementById('comanda-modal')
-          if (modal) {
-            modal.classList.remove('hidden')
-          }
-        }}
+        onClick={openModal}
         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
       >
         🖨️ Imprimir Comanda
@@ -91,9 +94,7 @@ export default function ComandaModal({ order }: ComandaModalProps) {
         id="comanda-modal"
         className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 hidden"
         onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            document.getElementById('comanda-modal')?.classList.add('hidden')
-          }
+          if (e.target === e.currentTarget) closeModal()
         }}
       >
         <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
@@ -131,9 +132,7 @@ export default function ComandaModal({ order }: ComandaModalProps) {
 
           <div className="mt-6 flex justify-end gap-3">
             <button
-              onClick={() => {
-                document.getElementById('comanda-modal')?.classList.add('hidden')
-              }}
+              onClick={closeModal}
               className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-800"
             >
               Fechar
