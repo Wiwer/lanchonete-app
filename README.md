@@ -45,3 +45,4 @@ Senha do gerente: 1234
 
 📄 Licença
 MIT
+.
