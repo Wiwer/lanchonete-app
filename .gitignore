@@ -46,3 +46,12 @@ next-env.d.ts
 echo ".windsurf/" >> .gitignore
 echo ".claude/" >> .gitignore
 echo "*.log" >> .gitignore
+
+# Arquivos de assistente de IA
+.agents/
+AGENTS.md
+CLAUDE.md
+skills-lock.json
+
+# Arquivos temporários
+populate-cardapio.ts
