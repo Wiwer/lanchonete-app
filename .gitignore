@@ -41,3 +41,8 @@ next-env.d.ts
 .idea/
 *.swp
 *.swo
+
+# Crie ou edite o .gitignore
+echo ".windsurf/" >> .gitignore
+echo ".claude/" >> .gitignore
+echo "*.log" >> .gitignore
