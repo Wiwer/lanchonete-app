@@ -38,12 +38,6 @@ export default async function GarcomPage() {
                 {totalOcupadas} ocupadas
               </span>
             </div>
-            <Link
-              href="/admin"
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium flex items-center gap-2"
-            >
-              ← Voltar ao Admin
-            </Link>
           </div>
         </div>
 
