@@ -2,25 +2,35 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
+
+interface Category {
+  id: string
+  name: string
+}
 
 interface Product {
   id: string
   name: string
   price: number
   active: boolean
+  categoryId: string | null
+  category?: Category | null
 }
 
 export default function AdminCardapioPage() {
-  const router = useRouter()
   const { showToast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  const [formData, setFormData] = useState({ name: '', price: '' })
+  const [formData, setFormData] = useState({
+    name: '',
+    price: '',
+    categoryId: '',
+  })
 
   const fetchProducts = async () => {
     try {
@@ -30,40 +40,56 @@ export default function AdminCardapioPage() {
       setProducts(data)
     } catch (error) {
       showToast('❌ Erro ao carregar produtos', 'error')
-    } finally {
-      setLoading(false)
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/categories')
+      if (!res.ok) throw new Error('Erro ao buscar categorias')
+      const data = await res.json()
+      setCategories(data)
+    } catch (error) {
+      showToast('❌ Erro ao carregar categorias', 'error')
     }
   }
 
   useEffect(() => {
-    fetchProducts()
+    Promise.all([fetchProducts(), fetchCategories()]).finally(() => setLoading(false))
   }, [])
 
   const handleOpenCreate = () => {
     setEditingProduct(null)
-    setFormData({ name: '', price: '' })
+    setFormData({ name: '', price: '', categoryId: '' })
     setShowModal(true)
   }
 
   const handleOpenEdit = (product: Product) => {
     setEditingProduct(product)
-    setFormData({ name: product.name, price: product.price.toString() })
+    setFormData({
+      name: product.name,
+      price: product.price.toString(),
+      categoryId: product.categoryId || '',
+    })
     setShowModal(true)
   }
 
   const handleSave = async () => {
-    const { name, price } = formData
+    const { name, price, categoryId } = formData
     if (!name.trim() || !price) {
       showToast('⚠️ Preencha todos os campos', 'warning')
       return
     }
 
     try {
-      const url = editingProduct ? `/api/products` : '/api/products'
+      const url = '/api/products'
       const method = editingProduct ? 'PUT' : 'POST'
-      const body = editingProduct
-        ? { id: editingProduct.id, name: name.trim(), price: parseFloat(price) }
-        : { name: name.trim(), price: parseFloat(price) }
+      const body = {
+        id: editingProduct?.id,
+        name: name.trim(),
+        price: parseFloat(price),
+        categoryId: categoryId || null,
+      }
 
       const res = await fetch(url, {
         method,
@@ -122,14 +148,10 @@ export default function AdminCardapioPage() {
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <div className="flex justify-between items-center">
-            <div className="flex-1"></div> {/* Espaço vazio à esquerda para equilibrar */}
-            <h1 className="text-3xl font-bold text-gray-900 text-center flex-1">📋 Gerenciar Cardápio</h1>
-            <Link href="/admin" className="text-blue-600 hover:text-blue-800 font-medium flex-1 text-right">
+            <h1 className="text-3xl font-bold text-gray-900">📋 Gerenciar Cardápio</h1>
+            <Link href="/admin" className="text-blue-600 hover:text-blue-800 font-medium">
               ← Voltar ao Admin
             </Link>
-            {/* <Link href="/mesas" className="text-blue-600 hover:text-blue-800 font-medium">
-              ← Voltar às mesas
-            </Link> */}
           </div>
         </div>
 
@@ -150,6 +172,7 @@ export default function AdminCardapioPage() {
                 <tr>
                   <th className="text-left py-3 px-4 font-semibold text-gray-800">Nome</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-800">Preço</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-800">Categoria</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-800">Status</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-800">Ações</th>
                 </tr>
@@ -165,6 +188,11 @@ export default function AdminCardapioPage() {
                     <td className="py-3 px-4">
                       <span className={`font-medium ${!product.active ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
                         R$ {product.price.toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="text-sm text-gray-600">
+                        {product.category?.name || 'Sem categoria'}
                       </span>
                     </td>
                     <td className="py-3 px-4">
@@ -198,7 +226,7 @@ export default function AdminCardapioPage() {
                 ))}
                 {products.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-gray-500">
+                    <td colSpan={5} className="py-8 text-center text-gray-500">
                       Nenhum produto cadastrado.
                     </td>
                   </tr>
@@ -228,7 +256,7 @@ export default function AdminCardapioPage() {
               />
             </div>
 
-            <div className="mb-6">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-800 mb-1">Preço (R$)</label>
               <input
                 type="number"
@@ -239,6 +267,22 @@ export default function AdminCardapioPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
                 placeholder="Ex: 25.00"
               />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-800 mb-1">Categoria</label>
+              <select
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+              >
+                <option value="">Sem categoria</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex gap-3">

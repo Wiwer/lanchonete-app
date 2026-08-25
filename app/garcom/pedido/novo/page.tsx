@@ -1,4 +1,3 @@
-// app/garcom/pedido/novo/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -11,6 +10,10 @@ interface Product {
   name: string
   price: number
   active: boolean
+  category?: {
+    id: string
+    name: string
+  } | null
 }
 
 interface CartItem {
@@ -31,14 +34,13 @@ export default function GarcomNovoPedidoPage() {
   const [loading, setLoading] = useState(true)
   const [enviando, setEnviando] = useState(false)
 
-  // Buscar produtos do cardápio (apenas ativos)
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const res = await fetch('/api/products?ativos=true')
         if (!res.ok) throw new Error('Erro ao buscar produtos')
         const data = await res.json()
-        setProducts(data.filter((p: Product) => p.active === true))
+        setProducts(data)
       } catch (error) {
         showToast('❌ Erro ao carregar produtos', 'error')
       } finally {
@@ -48,7 +50,16 @@ export default function GarcomNovoPedidoPage() {
     fetchProducts()
   }, [])
 
-  // Adicionar item ao carrinho
+  // Agrupar produtos por categoria
+  const groupedProducts = products.reduce((acc, product) => {
+    const categoryName = product.category?.name || 'Outros'
+    if (!acc[categoryName]) {
+      acc[categoryName] = []
+    }
+    acc[categoryName].push(product)
+    return acc
+  }, {} as Record<string, Product[]>)
+
   const adicionarAoCarrinho = (product: Product) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.productId === product.id)
@@ -68,12 +79,10 @@ export default function GarcomNovoPedidoPage() {
     })
   }
 
-  // Remover item do carrinho (diminuir ou remover completamente)
   const removerDoCarrinho = (productId: string, removerTodos = false) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.productId === productId)
       if (!existing) return prev
-
       if (removerTodos || existing.quantity <= 1) {
         return prev.filter((item) => item.productId !== productId)
       }
@@ -85,25 +94,20 @@ export default function GarcomNovoPedidoPage() {
     })
   }
 
-  // Calcular total do carrinho
   const totalCarrinho = cart.reduce((acc, item) => acc + item.price * item.quantity, 0)
 
-  // Enviar pedido
   const enviarPedido = async () => {
     if (cart.length === 0) {
       showToast('⚠️ Adicione pelo menos um item ao pedido', 'warning')
       return
     }
-
     if (!mesaNumber) {
       showToast('❌ Número da mesa não informado', 'error')
       return
     }
 
     setEnviando(true)
-
     try {
-      // 1. Abrir a mesa (criar pedido)
       const openRes = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,16 +116,13 @@ export default function GarcomNovoPedidoPage() {
           tableNumber: parseInt(mesaNumber),
         }),
       })
-
       if (!openRes.ok) {
         const error = await openRes.json()
         showToast(`❌ ${error.error}`, 'error')
         return
       }
-
       const order = await openRes.json()
 
-      // 2. Adicionar todos os itens do carrinho
       for (const item of cart) {
         const addRes = await fetch('/api/orders', {
           method: 'POST',
@@ -133,7 +134,6 @@ export default function GarcomNovoPedidoPage() {
             quantity: item.quantity,
           }),
         })
-
         if (!addRes.ok) {
           const error = await addRes.json()
           showToast(`❌ Erro ao adicionar ${item.name}: ${error.error}`, 'error')
@@ -170,58 +170,54 @@ export default function GarcomNovoPedidoPage() {
                 Novo Pedido - Mesa {mesaNumber}
               </h1>
             </div>
-            <Link
-              href="/garcom"
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium flex items-center gap-2"
-            >
+            <Link href="/garcom" className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium">
               ← Voltar às mesas
             </Link>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Cardápio - lado esquerdo (2 colunas) */}
+          {/* Cardápio agrupado por categoria */}
           <div className="md:col-span-2 bg-white rounded-xl shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">📋 Cardápio</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {products.map((product) => (
-                <button
-                  key={product.id}
-                  onClick={() => adicionarAoCarrinho(product)}
-                  className="flex justify-between items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-left border border-gray-200"
-                >
-                  <span className="font-medium text-gray-800">{product.name}</span>
-                  <span className="text-green-600 font-bold">R$ {product.price.toFixed(2)}</span>
-                </button>
-              ))}
-              {products.length === 0 && (
-                <p className="col-span-2 text-center text-gray-500 py-8">
-                  Nenhum produto ativo no cardápio.
-                </p>
-              )}
-            </div>
+            {Object.keys(groupedProducts).length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Nenhum produto ativo no cardápio.</p>
+            ) : (
+              Object.entries(groupedProducts).map(([categoryName, prods]) => (
+                <div key={categoryName} className="mb-6 last:mb-0">
+                  <h3 className="text-md font-semibold text-gray-600 mb-2 border-b pb-1">
+                    {categoryName}
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {prods.map((product) => (
+                      <button
+                        key={product.id}
+                        onClick={() => adicionarAoCarrinho(product)}
+                        className="flex justify-between items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-left border border-gray-200"
+                      >
+                        <span className="font-medium text-gray-800">{product.name}</span>
+                        <span className="text-green-600 font-bold">R$ {product.price.toFixed(2)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
-          {/* Carrinho - lado direito (1 coluna) */}
+          {/* Carrinho */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
               🛒 Pedido
-              <span className="text-sm font-normal text-gray-500">
-                ({cart.length} itens)
-              </span>
+              <span className="text-sm font-normal text-gray-500">({cart.length} itens)</span>
             </h2>
 
             {cart.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                Nenhum item adicionado.
-              </p>
+              <p className="text-gray-500 text-center py-8">Nenhum item adicionado.</p>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {cart.map((item) => (
-                  <div
-                    key={item.productId}
-                    className="flex justify-between items-center p-2 bg-gray-50 rounded-lg"
-                  >
+                  <div key={item.productId} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
                     <div className="flex-1">
                       <span className="font-medium text-gray-800">{item.name}</span>
                       <div className="flex items-center gap-2 mt-1">
@@ -231,9 +227,7 @@ export default function GarcomNovoPedidoPage() {
                         >
                           −
                         </button>
-                        <span className="text-sm font-semibold w-6 text-center text-gray-500">
-                          {item.quantity}
-                        </span>
+                        <span className="text-sm font-semibold w-6 text-center">{item.quantity}</span>
                         <button
                           onClick={() => adicionarAoCarrinho({ id: item.productId, name: item.name, price: item.price, active: true })}
                           className="w-6 h-6 bg-green-500 hover:bg-green-600 text-white rounded flex items-center justify-center text-sm"
@@ -248,9 +242,7 @@ export default function GarcomNovoPedidoPage() {
                         </button>
                       </div>
                     </div>
-                    <span className="font-bold text-green-600">
-                      R$ {(item.price * item.quantity).toFixed(2)}
-                    </span>
+                    <span className="font-bold text-green-600">R$ {(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -259,11 +251,8 @@ export default function GarcomNovoPedidoPage() {
             <div className="mt-4 pt-4 border-t">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-lg font-semibold text-gray-800">Total</span>
-                <span className="text-2xl font-bold text-green-700">
-                  R$ {totalCarrinho.toFixed(2)}
-                </span>
+                <span className="text-2xl font-bold text-green-700">R$ {totalCarrinho.toFixed(2)}</span>
               </div>
-
               <button
                 onClick={enviarPedido}
                 disabled={enviando || cart.length === 0}

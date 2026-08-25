@@ -3,7 +3,7 @@ import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 import Link from 'next/link'
 import AddItemButton from './components/AddItemButton'
 import FecharContaButton from './components/FecharContaButton'
-import RemoveItemButton from './components/RemoveItemButton'  // <-- importado
+import RemoveItemButton from './components/RemoveItemButton'
 import TransferirMesaButton from './components/TransferirMesaButton'
 import CancelarAberturaButton from './components/CancelarAberturaButton'
 import ComandaModal from '@/app/components/ComandaModal'
@@ -32,10 +32,27 @@ export default async function PedidoPage({
     },
   })
 
+  // Buscar produtos ativos com categoria
   const products = await prisma.product.findMany({
     where: { active: true },
-    orderBy: { name: 'asc' },
+    include: {
+      category: true,
+    },
+    orderBy: [
+      { category: { name: 'asc' } },
+      { name: 'asc' },
+    ],
   })
+
+  // Agrupar produtos por categoria
+  const groupedProducts = products.reduce((acc, product) => {
+    const categoryName = product.category?.name || 'Outros'
+    if (!acc[categoryName]) {
+      acc[categoryName] = []
+    }
+    acc[categoryName].push(product)
+    return acc
+  }, {} as Record<string, typeof products>)
 
   if (!order) {
     return (
@@ -82,23 +99,34 @@ export default async function PedidoPage({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Cardápio */}
+          {/* Cardápio agrupado por categoria */}
           <div className="bg-white rounded-xl shadow-md p-6 no-print">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">📋 Cardápio</h2>
-            <ul className="divide-y divide-gray-200">
-              {products.map((product) => (
-                <li key={product.id} className="py-3 flex justify-between items-center">
-                  <div>
-                    <span className="font-medium text-gray-800">{product.name}</span>
-                    <span className="ml-2 text-sm text-gray-500">R$ {product.price.toFixed(2)}</span>
-                  </div>
-                  <AddItemButton orderId={order.id} productId={product.id} productName={product.name} />
-                </li>
-              ))}
-            </ul>
+            {Object.keys(groupedProducts).length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Nenhum produto ativo no cardápio.</p>
+            ) : (
+              Object.entries(groupedProducts).map(([categoryName, products]) => (
+                <div key={categoryName} className="mb-6 last:mb-0">
+                  <h3 className="text-md font-semibold text-gray-600 mb-2 border-b pb-1">
+                    {categoryName}
+                  </h3>
+                  <ul className="divide-y divide-gray-200">
+                    {products.map((product) => (
+                      <li key={product.id} className="py-3 flex justify-between items-center">
+                        <div>
+                          <span className="font-medium text-gray-800">{product.name}</span>
+                          <span className="ml-2 text-sm text-gray-500">R$ {product.price.toFixed(2)}</span>
+                        </div>
+                        <AddItemButton orderId={order.id} productId={product.id} productName={product.name} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))
+            )}
           </div>
 
-          {/* Itens consumidos */}
+          {/* Itens consumidos e ações */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">🛒 Itens consumidos</h2>
             {order.items.length === 0 ? (
@@ -106,13 +134,12 @@ export default async function PedidoPage({
             ) : (
               <ul className="divide-y divide-gray-200">
                 {order.items.map((item) => (
-                  <li key={item.id} className="py-3 flex justify-between items-center text-gray-900">
+                  <li key={item.id} className="py-3 flex justify-between items-center">
                     <span>{item.quantity}x {item.product.name}</span>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-green-600">
                         R$ {(item.quantity * item.unitPrice).toFixed(2)}
                       </span>
-                      {/* Botão de remover – apenas se pedido estiver aberto */}
                       {order.status === 'OPEN' && (
                         <RemoveItemButton
                           orderId={order.id}
@@ -126,7 +153,7 @@ export default async function PedidoPage({
               </ul>
             )}
             <div className="mt-6 border-t pt-4 flex justify-between items-center">
-              <span className="text-2xl font-bold text-green-700">Total:</span>
+              <span className="text-lg font-semibold">Total:</span>
               <span className="text-2xl font-bold text-green-700">R$ {order.total.toFixed(2)}</span>
             </div>
 

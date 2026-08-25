@@ -10,7 +10,66 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   console.log('🌱 Iniciando seed...')
 
-  // 1. Criar 10 mesas
+  // 1. Criar Categorias
+  console.log('📁 Criando categorias...')
+  const categorias = {
+    lanches: await prisma.category.upsert({
+      where: { name: 'Lanches' },
+      update: {},
+      create: { name: 'Lanches', description: 'Hambúrgueres e sanduíches' },
+    }),
+    bebidas: await prisma.category.upsert({
+      where: { name: 'Bebidas' },
+      update: {},
+      create: { name: 'Bebidas', description: 'Refrigerantes, sucos e bebidas' },
+    }),
+    sobremesas: await prisma.category.upsert({
+      where: { name: 'Sobremesas' },
+      update: {},
+      create: { name: 'Sobremesas', description: 'Doces e milkshakes' },
+    }),
+  }
+  console.log('✅ Categorias criadas!')
+
+  // 2. Criar Produtos
+  console.log('📦 Criando produtos...')
+  const products = [
+    // Lanches
+    { name: 'X-Burguer', price: 25.0, categoryId: categorias.lanches.id },
+    { name: 'X-Salada', price: 22.0, categoryId: categorias.lanches.id },
+    { name: 'X-Bacon', price: 28.0, categoryId: categorias.lanches.id },
+    { name: 'Vegetariano', price: 24.0, categoryId: categorias.lanches.id },
+    // Bebidas
+    { name: 'Coca-Cola (Lata)', price: 8.0, categoryId: categorias.bebidas.id },
+    { name: 'Guaraná (Lata)', price: 7.0, categoryId: categorias.bebidas.id },
+    { name: 'Suco de Laranja', price: 10.0, categoryId: categorias.bebidas.id },
+    { name: 'Água Mineral', price: 5.0, categoryId: categorias.bebidas.id },
+    // Sobremesas
+    { name: 'Milkshake', price: 15.0, categoryId: categorias.sobremesas.id },
+    { name: 'Petit Gateau', price: 18.0, categoryId: categorias.sobremesas.id },
+    { name: 'Pudim', price: 12.0, categoryId: categorias.sobremesas.id },
+  ]
+
+  for (const product of products) {
+    await prisma.product.upsert({
+      where: { name: product.name },
+      update: {
+        price: product.price,
+        categoryId: product.categoryId,
+        active: true,
+      },
+      create: {
+        name: product.name,
+        price: product.price,
+        categoryId: product.categoryId,
+        active: true,
+      },
+    })
+  }
+  console.log('✅ Produtos criados!')
+
+  // 3. Criar mesas (mantido)
+  console.log('🪑 Criando mesas...')
   for (let i = 1; i <= 10; i++) {
     await prisma.table.upsert({
       where: { number: i },
@@ -20,63 +79,8 @@ async function main() {
   }
   console.log('✅ Mesas 1 a 10 criadas!')
 
-  // 2. Criar produtos
-  const products = [
-    { name: 'X-Burguer', price: 25.0 },
-    { name: 'X-Salada', price: 22.0 },
-    { name: 'Batata Frita', price: 12.0 },
-    { name: 'Coca-Cola (Lata)', price: 8.0 },
-    { name: 'Milkshake', price: 15.0 },
-  ]
-
-  for (const product of products) {
-    await prisma.product.upsert({
-      where: { name: product.name },
-      update: {},
-      create: product,
-    })
-  }
-  console.log('✅ Produtos do cardápio criados!')
-
-  // 3. Criar alguns pedidos de exemplo
-  const mesa1 = await prisma.table.findUnique({ where: { number: 1 } })
-  const mesa2 = await prisma.table.findUnique({ where: { number: 2 } })
-  const xBurguer = await prisma.product.findUnique({ where: { name: 'X-Burguer' } })
-  const batata = await prisma.product.findUnique({ where: { name: 'Batata Frita' } })
-  const coca = await prisma.product.findUnique({ where: { name: 'Coca-Cola (Lata)' } })
-
-  if (mesa1 && xBurguer && batata) {
-    const order1 = await prisma.order.create({
-      data: {
-        tableId: mesa1.id,
-        status: 'OPEN',
-        total: 25.0 + 12.0,
-        items: {
-          create: [
-            { productId: xBurguer.id, quantity: 1, unitPrice: 25.0 },
-            { productId: batata.id, quantity: 1, unitPrice: 12.0 },
-          ],
-        },
-      },
-    })
-    console.log(`✅ Mesa 1 aberta com pedido ${order1.id}`)
-  }
-
-  if (mesa2 && coca) {
-    const order2 = await prisma.order.create({
-      data: {
-        tableId: mesa2.id,
-        status: 'OPEN',
-        total: 8.0,
-        items: {
-          create: [{ productId: coca.id, quantity: 1, unitPrice: 8.0 }],
-        },
-      },
-    })
-    console.log(`✅ Mesa 2 aberta com pedido ${order2.id}`)
-  }
-
-  // 4. Criar configuração do gerente (senha padrão)
+  // 4. Criar configuração do gerente (mantido)
+  console.log('🔐 Criando configuração do gerente...')
   await prisma.gerenteConfig.upsert({
     where: { id: 'single' },
     update: {},
