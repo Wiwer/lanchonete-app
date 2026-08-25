@@ -14,6 +14,13 @@ interface Category {
   }
 }
 
+interface Product {
+  id: string
+  name: string
+  price: number
+  active: boolean
+}
+
 export default function AdminCategoriasPage() {
   const { showToast } = useToast()
   const [categories, setCategories] = useState<Category[]>([])
@@ -25,6 +32,10 @@ export default function AdminCategoriasPage() {
     description: '',
   })
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showProductsModal, setShowProductsModal] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(false)
 
   const fetchCategories = async () => {
     try {
@@ -118,6 +129,31 @@ export default function AdminCategoriasPage() {
     }
   }
 
+  // Função para abrir o modal de produtos
+  const openProductsModal = async (category: Category) => {
+    setSelectedCategory(category)
+    setProducts([])
+    setLoadingProducts(true)
+    setShowProductsModal(true)
+
+    try {
+      const res = await fetch(`/api/products?categoryId=${category.id}`)
+      if (!res.ok) throw new Error('Erro ao buscar produtos')
+      const data = await res.json()
+      setProducts(data)
+    } catch (error) {
+      showToast('❌ Erro ao carregar produtos', 'error')
+    } finally {
+      setLoadingProducts(false)
+    }
+  }
+
+  const closeProductsModal = () => {
+    setShowProductsModal(false)
+    setSelectedCategory(null)
+    setProducts([])
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
@@ -168,6 +204,12 @@ export default function AdminCategoriasPage() {
                       {category._count?.products || 0}
                     </td>
                     <td className="py-3 px-4 flex gap-2">
+                      <button
+                        onClick={() => openProductsModal(category)}
+                        className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors font-medium"
+                      >
+                        📋 Ver Produtos
+                      </button>
                       <button
                         onClick={() => handleOpenEdit(category)}
                         className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors font-medium"
@@ -248,6 +290,72 @@ export default function AdminCategoriasPage() {
                 className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
               >
                 {editingCategory ? 'Atualizar' : 'Criar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de produtos da categoria */}
+      {showProductsModal && selectedCategory && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          onClick={(e) => e.target === e.currentTarget && closeProductsModal()}
+        >
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">
+                📋 Produtos - {selectedCategory.name}
+              </h2>
+              <button
+                onClick={closeProductsModal}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {loadingProducts ? (
+              <p className="text-gray-500 text-center py-8">Carregando produtos...</p>
+            ) : products.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                Nenhum produto nesta categoria.
+              </p>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="text-left py-2 px-3 font-semibold text-gray-800">Nome</th>
+                    <th className="text-left py-2 px-3 font-semibold text-gray-800">Preço</th>
+                    <th className="text-left py-2 px-3 font-semibold text-gray-800">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((product) => (
+                    <tr key={product.id} className="border-b hover:bg-gray-50">
+                      <td className="py-2 px-3 text-gray-800">{product.name}</td>
+                      <td className="py-2 px-3 text-gray-800">R$ {product.price.toFixed(2)}</td>
+                      <td className="py-2 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          product.active
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {product.active ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={closeProductsModal}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-800 font-medium"
+              >
+                Fechar
               </button>
             </div>
           </div>

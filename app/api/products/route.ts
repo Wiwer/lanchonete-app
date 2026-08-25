@@ -13,15 +13,20 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const apenasAtivos = searchParams.get('ativos') === 'true'
+    const categoryId = searchParams.get('categoryId')
+
+    const where: any = {}
+    if (apenasAtivos) where.active = true
+    if (categoryId) where.categoryId = categoryId
 
     const products = await prisma.product.findMany({
-      where: apenasAtivos ? { active: true } : undefined,
+      where,
       include: {
-        category: true, // <-- inclui os dados da categoria
+        category: true,
       },
       orderBy: [
-        { category: { name: 'asc' } }, // ordena por categoria primeiro
-        { name: 'asc' }, // depois por nome
+        { category: { name: 'asc' } },
+        { name: 'asc' },
       ],
     })
     return NextResponse.json(products, { status: 200 })
