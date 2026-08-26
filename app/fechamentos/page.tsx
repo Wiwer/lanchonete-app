@@ -5,6 +5,7 @@ import Link from 'next/link'
 import ConfirmarPagamentoButton from './components/ConfirmarPagamentoButton'
 import ReabrirMesaButton from './components/ReabrirMesaButton'
 import AutoRefresh from '@/app/components/AutoRefresh'
+import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
 
 const adapter = new PrismaBetterSqlite3({
   url: `file:${process.cwd()}/dev.db`,
@@ -69,7 +70,7 @@ export default async function FechamentosPage() {
                     <span className="font-bold text-green-600">R$ {order.total.toFixed(2)}</span>
                   </div>
                   <div className="mt-1 text-xs text-gray-400">
-                    Pedido: {order.id.slice(0, 6)} • {new Date(order.createdAt).toLocaleTimeString()}
+                    Pedido: {formatOrderNumber(order.orderNumber, order.createdAt)} • {new Date(order.createdAt).toLocaleTimeString()}
                   </div>
                 </div>
                 <div className="flex gap-3">

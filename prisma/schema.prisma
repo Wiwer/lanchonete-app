@@ -37,6 +37,7 @@ model Table {
 
 model Order {
   id        String      @id @default(cuid())
+  orderNumber Int      @default(0) // NOVO
   tableId   String
   table     Table       @relation(fields: [tableId], references: [id])
   status    OrderStatus @default(OPEN)
@@ -44,6 +45,14 @@ model Order {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   items     OrderItem[]
+}
+
+model OrderSequence {
+  id          String   @id @default(cuid())
+  date        String   @unique // formato "YYYY-MM-DD"
+  lastNumber  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model OrderItem {

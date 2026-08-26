@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
+import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
 
 interface OrderItem {
   id: string
@@ -234,7 +235,7 @@ export default function HistoricoPage() {
                         Mesa {order.table.number}
                       </span>
                       <span className="bg-gray-100 text-gray-700 text-sm font-semibold px-3 py-1 rounded-full">
-                        Pedido #{order.id.slice(0, 6)}
+                        Pedido #{formatOrderNumber(order.orderNumber, order.createdAt)}
                       </span>
                     </div>
                     <div className="mt-1 text-sm text-gray-500">
@@ -268,7 +269,7 @@ export default function HistoricoPage() {
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-900">
-                Pedido #{selectedOrder.id.slice(0, 6)} - Mesa {selectedOrder.table.number}
+                Pedido # {formatOrderNumber(selectedOrder.orderNumber, selectedOrder.createdAt)} - Mesa {selectedOrder.table.number}
               </h2>
               <button
                 onClick={closeModal}
@@ -298,7 +299,7 @@ export default function HistoricoPage() {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-4 pt-4 border-t-2 border-gray-300 flex justify-between text-lg font-bold">
+                <div className="mt-4 pt-4 border-t-2 border-gray-300 flex justify-between text-lg font-bold text-green-700">
                   <span>Total</span>
                   <span className="text-green-700">R$ {selectedOrder.total.toFixed(2)}</span>
                 </div>

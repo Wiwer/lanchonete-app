@@ -7,6 +7,7 @@ import RemoveItemButton from './components/RemoveItemButton'
 import TransferirMesaButton from './components/TransferirMesaButton'
 import CancelarAberturaButton from './components/CancelarAberturaButton'
 import ComandaModal from '@/app/components/ComandaModal'
+import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
 
 const adapter = new PrismaBetterSqlite3({
   url: `file:${process.cwd()}/dev.db`,
@@ -70,7 +71,7 @@ export default async function PedidoPage({
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-800">
-                🍽️ Mesa {order.table.number} - Pedido #{order.id.slice(0, 6)}
+                🍽️ Mesa {order.table.number} - Pedido #{formatOrderNumber(order.orderNumber, order.createdAt)}
               </h1>
               <span
                 className={`inline-block text-sm font-semibold px-3 py-1 rounded-full ${

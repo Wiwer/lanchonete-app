@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
+import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
 
 interface ComandaModalProps {
   order: {
@@ -102,7 +103,7 @@ export default function ComandaModal({ order }: ComandaModalProps) {
             <div className="comanda-header">
               <h2 className="text-2xl font-bold text-center text-gray-900">🍽️ COMANDA</h2>
               <p className="text-center text-gray-700">Mesa {order.table.number}</p>
-              <p className="text-center text-gray-700">Pedido #{order.id.slice(0, 8)}</p>
+              <p className="text-center text-gray-700">Pedido # {formatOrderNumber(order.orderNumber, order.createdAt)}</p>
               <p className="text-center text-gray-600">{formatDate(order.createdAt)}</p>
               <p className="text-center text-sm text-gray-500">Status: {statusLabel}</p>
             </div>

@@ -22,19 +22,49 @@ export async function POST(request: Request) {
       newTableNumber,
     } = body
 
-    // --- ABRIR MESA ---
-    if (action === 'open' && tableNumber) {
-      const table = await prisma.table.findUnique({ where: { number: tableNumber } })
-      if (!table) return NextResponse.json({ error: 'Mesa não encontrada' }, { status: 404 })
-      const existing = await prisma.order.findFirst({
-        where: { tableId: table.id, status: 'OPEN' },
-      })
-      if (existing) return NextResponse.json({ error: 'Mesa já ocupada' }, { status: 409 })
-      const order = await prisma.order.create({
-        data: { tableId: table.id, status: 'OPEN', total: 0 },
-      })
-      return NextResponse.json(order, { status: 201 })
-    }
+// --- ABRIR MESA ---
+if (action === 'open' && tableNumber) {
+  const table = await prisma.table.findUnique({
+    where: { number: tableNumber },
+  })
+  if (!table) return NextResponse.json({ error: 'Mesa não encontrada' }, { status: 404 })
+
+  const existing = await prisma.order.findFirst({
+    where: { tableId: table.id, status: 'OPEN' },
+  })
+  if (existing) return NextResponse.json({ error: 'Mesa já ocupada' }, { status: 409 })
+
+  // --- GERAR NÚMERO SEQUENCIAL POR DIA ---
+  const today = new Date()
+  const dateStr = today.toISOString().split('T')[0] // "YYYY-MM-DD"
+
+  // Usar transação para garantir consistência
+  const order = await prisma.$transaction(async (tx) => {
+    // Buscar ou criar a sequência do dia
+    const sequence = await tx.orderSequence.upsert({
+      where: { date: dateStr },
+      update: {
+        lastNumber: { increment: 1 },
+      },
+      create: {
+        date: dateStr,
+        lastNumber: 1,
+      },
+    })
+
+    // Criar o pedido com o número gerado
+    return await tx.order.create({
+      data: {
+        tableId: table.id,
+        status: 'OPEN',
+        total: 0,
+        orderNumber: sequence.lastNumber,
+      },
+    })
+  })
+
+  return NextResponse.json(order, { status: 201 })
+}
 
     // --- ADICIONAR ITEM ---
     if (action === 'addItem' && orderId && productId) {

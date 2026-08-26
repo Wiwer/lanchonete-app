@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
+import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
 
 interface Product {
   id: string
@@ -42,6 +43,7 @@ export default function GarcomAdicionarItensPage() {
   const [loading, setLoading] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [totalPedido, setTotalPedido] = useState(0)
+  const [order, setOrder] = useState<any>(null) // ou defina uma interface Order
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,6 +54,7 @@ export default function GarcomAdicionarItensPage() {
           return
         }
         const order = await orderRes.json()
+        setOrder(order) // se tiver um estado `order`
         setOrderItems(order.items || [])
         setTotalPedido(order.total || 0)
 
@@ -162,7 +165,7 @@ export default function GarcomAdicionarItensPage() {
             <div className="flex items-center gap-3">
               <span className="text-4xl">📝</span>
               <h1 className="text-3xl font-bold text-gray-800">
-                Adicionar Itens - Pedido #{orderId.slice(0, 6)}
+                Adicionar Itens - Pedido #{formatOrderNumber(order.orderNumber, new Date(order.createdAt))}
               </h1>
             </div>
             <Link href={`/garcom/pedido/${orderId}`} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium">

@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
+import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
 
 interface Category {
   id: string
