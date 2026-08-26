@@ -40,7 +40,7 @@ export default function AdminCardapioPage() {
   // Estados para os filtros
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
-  const [filterStatus, setFilterStatus] = useState('todos') // 'todos', 'ativo', 'inativo'
+  const [filterStatus, setFilterStatus] = useState('ativo') // 'todos', 'ativo', 'inativo'
 
   const fetchProducts = async () => {
     try {
@@ -168,7 +168,7 @@ export default function AdminCardapioPage() {
   const limparFiltros = () => {
     setSearchTerm('')
     setFilterCategory('')
-    setFilterStatus('todos')
+    setFilterStatus('ativo')
   }
 
   if (loading) {

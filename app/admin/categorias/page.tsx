@@ -15,6 +15,7 @@ interface Category {
 }
 
 interface Product {
+  categoryId: string
   id: string
   name: string
   price: number
@@ -35,7 +36,7 @@ export default function AdminCategoriasPage() {
   const [showProductsModal, setShowProductsModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [products, setProducts] = useState<Product[]>([])
-  const [loadingProducts, setLoadingProducts] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<'todos' | 'ativo' | 'inativo'>('todos')
 
   const fetchCategories = async () => {
     try {
@@ -50,8 +51,19 @@ export default function AdminCategoriasPage() {
     }
   }
 
+  const fetchProducts = async () => {
+  try {
+    const res = await fetch('/api/products')
+    if (!res.ok) throw new Error('Erro ao buscar produtos')
+    const data = await res.json()
+    setProducts(data)
+  } catch (error) {
+    showToast('❌ Erro ao carregar produtos', 'error')
+  }
+}
+
   useEffect(() => {
-    fetchCategories()
+    Promise.all([fetchCategories(), fetchProducts()])
   }, [])
 
   const handleOpenCreate = () => {
@@ -130,30 +142,54 @@ export default function AdminCategoriasPage() {
   }
 
   // Função para abrir o modal de produtos
-  const openProductsModal = async (category: Category) => {
-    setSelectedCategory(category)
-    setProducts([])
-    setLoadingProducts(true)
-    setShowProductsModal(true)
-
-    try {
-      const res = await fetch(`/api/products?categoryId=${category.id}`)
-      if (!res.ok) throw new Error('Erro ao buscar produtos')
-      const data = await res.json()
-      setProducts(data)
-    } catch (error) {
-      showToast('❌ Erro ao carregar produtos', 'error')
-    } finally {
-      setLoadingProducts(false)
+  const openProductsModal = (category?: Category) => {
+    if (category) {
+      setSelectedCategory(category)
     }
+    setStatusFilter('ativo')
+    setShowProductsModal(true)
   }
 
   const closeProductsModal = () => {
     setShowProductsModal(false)
     setSelectedCategory(null)
-    setProducts([])
   }
 
+  const handleToggleActive = async (productId: string, currentActive: boolean) => {
+  try {
+    const res = await fetch('/api/products', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: productId,
+        active: !currentActive,
+      }),
+    })
+
+    if (!res.ok) {
+      const error = await res.json()
+      showToast(`❌ ${error.error}`, 'error')
+      return
+    }
+
+    // Recarregar a lista de produtos para atualizar o modal
+    await fetchProducts()
+    showToast(currentActive ? '✅ Produto desativado' : '✅ Produto ativado', 'success')
+  } catch (error) {
+    showToast('❌ Erro ao alterar status', 'error')
+  }
+}
+
+  const filteredProducts = selectedCategory
+  ? products
+      .filter((product) => product.categoryId === selectedCategory.id)
+      .filter((product) => {
+        if (statusFilter === 'todos') return true
+        if (statusFilter === 'ativo') return product.active === true
+        if (statusFilter === 'inativo') return product.active === false
+        return true
+      })
+  : []
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
@@ -302,7 +338,7 @@ export default function AdminCategoriasPage() {
           className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
           onClick={(e) => e.target === e.currentTarget && closeProductsModal()}
         >
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-3xl p-6 max-w-2xl w-full max-h-[80vh] flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-900">
                 📋 Produtos - {selectedCategory.name}
@@ -314,41 +350,86 @@ export default function AdminCategoriasPage() {
                 ✕
               </button>
             </div>
-
-            {loadingProducts ? (
-              <p className="text-gray-500 text-center py-8">Carregando produtos...</p>
-            ) : products.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                Nenhum produto nesta categoria.
-              </p>
-            ) : (
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="text-left py-2 px-3 font-semibold text-gray-800">Nome</th>
-                    <th className="text-left py-2 px-3 font-semibold text-gray-800">Preço</th>
-                    <th className="text-left py-2 px-3 font-semibold text-gray-800">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => (
-                    <tr key={product.id} className="border-b hover:bg-gray-50">
-                      <td className="py-2 px-3 text-gray-800">{product.name}</td>
-                      <td className="py-2 px-3 text-gray-800">R$ {product.price.toFixed(2)}</td>
-                      <td className="py-2 px-3">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          product.active
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          {product.active ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setStatusFilter('todos')}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === 'todos'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Todos
+              </button>
+              <button
+                onClick={() => setStatusFilter('ativo')}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === 'ativo'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Ativos
+              </button>
+              <button
+                onClick={() => setStatusFilter('inativo')}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === 'inativo'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Inativos
+              </button>
+              <span className="ml-auto text-sm text-gray-500">
+                {filteredProducts.length} produto(s)
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto min-h-[200px]">
+              {filteredProducts.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">Nenhum produto nesta categoria.</p>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b sticky top-0 z-10">
+                    <tr>
+                      <th className="text-left py-2 px-3 font-semibold text-gray-800">Nome</th>
+                      <th className="text-left py-2 px-3 font-semibold text-gray-800">Preço</th>
+                      <th className="text-left py-2 px-3 font-semibold text-gray-800">Status</th>
+                      <th className="text-left py-2 px-3 font-semibold text-gray-800">Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    {filteredProducts.map((product) => (
+                      <tr key={product.id} className="border-b hover:bg-gray-50">
+                        <td className="py-2 px-3 text-gray-800">{product.name}</td>
+                        <td className="py-2 px-3 text-gray-800">R$ {product.price.toFixed(2)}</td>
+                        <td className="py-2 px-3">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                            product.active
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {product.active ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3">
+                          <button
+                            onClick={() => handleToggleActive(product.id, product.active)}
+                            className={`px-2 py-1 text-xs rounded-lg font-medium transition-colors ${
+                              product.active
+                                ? 'bg-red-500 hover:bg-red-600 text-white'
+                                : 'bg-green-500 hover:bg-green-600 text-white'
+                            }`}
+                          >
+                            {product.active ? 'Desativar' : 'Ativar'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
 
             <div className="mt-6 flex justify-end">
               <button
