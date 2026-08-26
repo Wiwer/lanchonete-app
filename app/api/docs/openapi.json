@@ -1,0 +1,311 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Lanchonete API",
+    "version": "1.0.0",
+    "description": "API para gerenciamento de lanchonete - Next.js + Prisma",
+    "contact": {
+      "name": "Seu Nome",
+      "email": "seu-email@exemplo.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor de Desenvolvimento"
+    }
+  ],
+  "tags": [
+    { "name": "Products", "description": "Gerenciamento de produtos" },
+    { "name": "Categories", "description": "Gerenciamento de categorias" },
+    { "name": "Orders", "description": "Gerenciamento de pedidos" },
+    { "name": "History", "description": "Histórico de pedidos" },
+    { "name": "Tables", "description": "Gerenciamento de mesas" },
+    { "name": "Dashboard", "description": "Métricas e gráficos" }
+  ],
+  "components": {
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "price": { "type": "number", "format": "float" },
+          "active": { "type": "boolean" },
+          "categoryId": { "type": "string" },
+          "category": { "$ref": "#/components/schemas/Category" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "products": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "orderNumber": { "type": "integer" },
+          "tableId": { "type": "string" },
+          "table": { "$ref": "#/components/schemas/Table" },
+          "status": { "type": "string", "enum": ["OPEN", "WAITING_PAYMENT", "CLOSED"] },
+          "total": { "type": "number", "format": "float" },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/OrderItem" } },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "OrderItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "quantity": { "type": "integer" },
+          "unitPrice": { "type": "number", "format": "float" },
+          "productId": { "type": "string" },
+          "product": { "$ref": "#/components/schemas/Product" },
+          "orderId": { "type": "string" }
+        }
+      },
+      "Table": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "number": { "type": "integer" },
+          "orders": { "type": "array", "items": { "$ref": "#/components/schemas/Order" } },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/products": {
+      "get": {
+        "summary": "Lista todos os produtos",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ativos",
+            "schema": { "type": "string", "enum": ["true", "false"] },
+            "description": "Filtrar produtos ativos ou inativos"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Lista de produtos", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } } } } },
+          "500": { "description": "Erro interno" }
+        }
+      },
+      "post": {
+        "summary": "Cria um novo produto",
+        "tags": ["Products"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "price"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "price": { "type": "number" },
+                  "categoryId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Produto criado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } } },
+          "400": { "description": "Dados inválidos" },
+          "409": { "description": "Produto já existe" }
+        }
+      },
+      "put": {
+        "summary": "Atualiza um produto",
+        "tags": ["Products"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "price": { "type": "number" },
+                  "active": { "type": "boolean" },
+                  "categoryId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Produto atualizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } } },
+          "404": { "description": "Produto não encontrado" }
+        }
+      },
+      "delete": {
+        "summary": "Desativa um produto",
+        "tags": ["Products"],
+        "parameters": [{ "in": "query", "name": "id", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Produto desativado" },
+          "404": { "description": "Produto não encontrado" }
+        }
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "summary": "Lista todas as categorias",
+        "tags": ["Categories"],
+        "responses": {
+          "200": { "description": "Lista de categorias", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Category" } } } } },
+          "500": { "description": "Erro interno" }
+        }
+      },
+      "post": {
+        "summary": "Cria uma nova categoria",
+        "tags": ["Categories"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Categoria criada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Category" } } } },
+          "409": { "description": "Categoria já existe" }
+        }
+      },
+      "put": {
+        "summary": "Atualiza uma categoria",
+        "tags": ["Categories"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id", "name"],
+                "properties": {
+                  "id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Categoria atualizada" },
+          "404": { "description": "Categoria não encontrada" }
+        }
+      },
+      "delete": {
+        "summary": "Exclui uma categoria",
+        "tags": ["Categories"],
+        "parameters": [{ "in": "query", "name": "id", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Categoria excluída" },
+          "409": { "description": "Categoria com produtos associados" },
+          "404": { "description": "Categoria não encontrada" }
+        }
+      }
+    },
+    "/api/orders": {
+      "post": {
+        "summary": "Gerenciamento de pedidos (várias ações)",
+        "tags": ["Orders"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": { "type": "string", "enum": ["open", "close", "addItem", "removeItem", "transfer", "reopen", "confirmPayment", "cancel"] },
+                  "tableNumber": { "type": "integer" },
+                  "orderId": { "type": "string" },
+                  "productId": { "type": "string" },
+                  "quantity": { "type": "integer" },
+                  "itemId": { "type": "string" },
+                  "subAction": { "type": "string", "enum": ["decrease", "remove"] },
+                  "newTableNumber": { "type": "integer" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Pedido criado (action=open)" },
+          "200": { "description": "Ação executada com sucesso" },
+          "400": { "description": "Ação inválida ou dados faltando" },
+          "409": { "description": "Conflito" },
+          "500": { "description": "Erro interno" }
+        }
+      }
+    },
+    "/api/orders/history": {
+      "get": {
+        "summary": "Lista pedidos finalizados (CLOSED)",
+        "tags": ["History"],
+        "parameters": [
+          { "in": "query", "name": "dataInicio", "schema": { "type": "string", "format": "date" }, "description": "Data inicial" },
+          { "in": "query", "name": "dataFim", "schema": { "type": "string", "format": "date" }, "description": "Data final" },
+          { "in": "query", "name": "mesas", "schema": { "type": "string" }, "description": "Números das mesas separados por vírgula" },
+          { "in": "query", "name": "totalMin", "schema": { "type": "number" }, "description": "Valor mínimo" },
+          { "in": "query", "name": "totalMax", "schema": { "type": "number" }, "description": "Valor máximo" }
+        ],
+        "responses": {
+          "200": { "description": "Lista de pedidos", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Order" } } } } }
+        }
+      }
+    },
+    "/api/tables": {
+      "get": {
+        "summary": "Lista todas as mesas (apenas números)",
+        "tags": ["Tables"],
+        "responses": {
+          "200": { "description": "Lista de números de mesas", "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object", "properties": { "number": { "type": "integer" } } } } } } }
+        }
+      }
+    },
+    "/api/tables/free": {
+      "get": {
+        "summary": "Lista mesas livres (sem pedidos abertos)",
+        "tags": ["Tables"],
+        "responses": {
+          "200": { "description": "Lista de números das mesas livres", "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } } }
+        }
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "summary": "Métricas e gráficos do dashboard",
+        "tags": ["Dashboard"],
+        "responses": {
+          "200": { "description": "Dados do dashboard", "content": { "application/json": { "schema": { "type": "object", "properties": { "day": { "type": "object" }, "week": { "type": "object" }, "month": { "type": "object" } } } } } }
+        }
+      }
+    }
+  }
+}
