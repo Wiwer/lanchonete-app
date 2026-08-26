@@ -16,6 +16,7 @@ interface OrderItem {
 }
 
 interface Order {
+  orderNumber: number
   id: string
   total: number
   createdAt: string
@@ -299,7 +300,7 @@ export default function HistoricoPage() {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-4 pt-4 border-t-2 border-gray-300 flex justify-between text-lg font-bold text-green-700">
+                <div className="mt-4 pt-4 border-t-2 border-gray-300 flex justify-between text-lg font-bold text-green-700 ">
                   <span>Total</span>
                   <span className="text-green-700">R$ {selectedOrder.total.toFixed(2)}</span>
                 </div>
