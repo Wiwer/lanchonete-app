@@ -32,6 +32,11 @@ export default function AdminCardapioPage() {
     categoryId: '',
   })
 
+  // Estados para os filtros
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
+  const [filterStatus, setFilterStatus] = useState('todos') // 'todos', 'ativo', 'inativo'
+
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/products')
@@ -57,6 +62,22 @@ export default function AdminCardapioPage() {
   useEffect(() => {
     Promise.all([fetchProducts(), fetchCategories()]).finally(() => setLoading(false))
   }, [])
+
+  // Aplicar filtros na lista de produtos
+  const filteredProducts = products.filter((product) => {
+    // Filtro por nome
+    const matchName = product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    // Filtro por categoria
+    const matchCategory = filterCategory ? product.categoryId === filterCategory : true
+    // Filtro por status
+    const matchStatus =
+      filterStatus === 'todos'
+        ? true
+        : filterStatus === 'ativo'
+        ? product.active === true
+        : product.active === false
+    return matchName && matchCategory && matchStatus
+  })
 
   const handleOpenCreate = () => {
     setEditingProduct(null)
@@ -135,6 +156,12 @@ export default function AdminCardapioPage() {
     }
   }
 
+  const limparFiltros = () => {
+    setSearchTerm('')
+    setFilterCategory('')
+    setFilterStatus('todos')
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
@@ -156,14 +183,68 @@ export default function AdminCardapioPage() {
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-6">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <h2 className="text-xl font-semibold text-gray-800">Produtos</h2>
             <button
               onClick={handleOpenCreate}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium whitespace-nowrap"
             >
               <span>+</span> Adicionar Produto
             </button>
+          </div>
+
+          {/* Barra de filtros */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">🔍 Buscar</label>
+                <input
+                  type="text"
+                  placeholder="Nome do produto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">📂 Categoria</label>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                >
+                  <option value="">Todas</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">📊 Status</label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="ativo">Ativo</option>
+                  <option value="inativo">Inativo</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={limparFiltros}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors font-medium w-full md:w-auto"
+                >
+                  🧹 Limpar Filtros
+                </button>
+              </div>
+            </div>
+            <div className="mt-2 text-sm text-gray-500">
+              Mostrando {filteredProducts.length} de {products.length} produtos
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -178,7 +259,7 @@ export default function AdminCardapioPage() {
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product.id} className="border-b hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-4">
                       <span className={`font-medium ${!product.active ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
@@ -224,10 +305,10 @@ export default function AdminCardapioPage() {
                     </td>
                   </tr>
                 ))}
-                {products.length === 0 && (
+                {filteredProducts.length === 0 && (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-gray-500">
-                      Nenhum produto cadastrado.
+                      Nenhum produto encontrado com os filtros aplicados.
                     </td>
                   </tr>
                 )}
@@ -237,7 +318,7 @@ export default function AdminCardapioPage() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal (mesmo de antes) */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full">

@@ -134,7 +134,7 @@ export default async function PedidoPage({
             ) : (
               <ul className="divide-y divide-gray-200">
                 {order.items.map((item) => (
-                  <li key={item.id} className="py-3 flex justify-between items-center">
+                  <li key={item.id} className="py-3 flex justify-between items-center text-gray-700">
                     <span>{item.quantity}x {item.product.name}</span>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-green-600">

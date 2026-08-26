@@ -37,6 +37,10 @@ export default function HistoricoPage() {
   })
   const [totalGeral, setTotalGeral] = useState(0)
 
+  // Estados para o modal
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [showModal, setShowModal] = useState(false)
+
   const buscarHistorico = async () => {
     setLoading(true)
     try {
@@ -92,6 +96,16 @@ export default function HistoricoPage() {
     })
   }
 
+  const openModal = (order: Order) => {
+    setSelectedOrder(order)
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setSelectedOrder(null)
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
@@ -118,7 +132,7 @@ export default function HistoricoPage() {
           </div>
         </div>
 
-        {/* Filtros */}
+        {/* Filtros (mesmo código de antes) */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">🔍 Filtros</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -129,7 +143,7 @@ export default function HistoricoPage() {
                 name="dataInicio"
                 value={filtros.dataInicio}
                 onChange={handleFiltroChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -139,7 +153,7 @@ export default function HistoricoPage() {
                 name="dataFim"
                 value={filtros.dataFim}
                 onChange={handleFiltroChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -150,7 +164,7 @@ export default function HistoricoPage() {
                 placeholder="Número da mesa"
                 value={filtros.mesa}
                 onChange={handleFiltroChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -162,7 +176,7 @@ export default function HistoricoPage() {
                   placeholder="Mín"
                   value={filtros.totalMin}
                   onChange={handleFiltroChange}
-                  className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                  className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                   type="number"
@@ -170,7 +184,7 @@ export default function HistoricoPage() {
                   placeholder="Máx"
                   value={filtros.totalMax}
                   onChange={handleFiltroChange}
-                  className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                  className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -210,7 +224,8 @@ export default function HistoricoPage() {
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
+                onClick={() => openModal(order)}
+                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer hover:bg-gray-50"
               >
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
@@ -233,6 +248,7 @@ export default function HistoricoPage() {
                     <div className="text-2xl font-bold text-green-700">
                       R$ {order.total.toFixed(2)}
                     </div>
+                    <span className="text-xs text-blue-600 hover:underline">🔍 Ver detalhes</span>
                   </div>
                 </div>
               </div>
@@ -240,6 +256,66 @@ export default function HistoricoPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de detalhes do pedido */}
+      {showModal && selectedOrder && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeModal()
+          }}
+        >
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Pedido #{selectedOrder.id.slice(0, 6)} - Mesa {selectedOrder.table.number}
+              </h2>
+              <button
+                onClick={closeModal}
+                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mb-4 text-sm text-gray-500">
+              {formatarData(selectedOrder.createdAt)}
+            </div>
+
+            {selectedOrder.items.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">Nenhum item neste pedido.</p>
+            ) : (
+              <>
+                <ul className="divide-y divide-gray-200">
+                  {selectedOrder.items.map((item) => (
+                    <li key={item.id} className="py-3 flex justify-between items-center">
+                      <div>
+                        <span className="font-medium text-gray-700">{item.quantity}x</span>
+                        <span className="ml-2 text-gray-700">{item.product.name}</span>
+                      </div>
+                      <span className="font-medium text-gray-700">
+                        R$ {(item.quantity * item.unitPrice).toFixed(2)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-4 pt-4 border-t-2 border-gray-300 flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span className="text-green-700">R$ {selectedOrder.total.toFixed(2)}</span>
+                </div>
+              </>
+            )}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

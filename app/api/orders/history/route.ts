@@ -8,6 +8,14 @@ const adapter = new PrismaBetterSqlite3({
 })
 const prisma = new PrismaClient({ adapter })
 
+// Função para converter data local (Brasília) para UTC
+function localToUTC(date: Date): Date {
+  // Subtrai 3 horas (fuso de Brasília é UTC-3)
+  const utcDate = new Date(date)
+  utcDate.setHours(utcDate.getHours() - 3)
+  return utcDate
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -17,24 +25,33 @@ export async function GET(request: Request) {
     const totalMin = searchParams.get('totalMin')
     const totalMax = searchParams.get('totalMax')
 
-    // Construir filtros
     const where: any = {
       status: 'CLOSED',
     }
 
-    // Filtro por data
     if (dataInicio) {
-      const start = new Date(dataInicio)
-      start.setHours(0, 0, 0, 0)
-      where.createdAt = { ...where.createdAt, gte: start }
-    }
-    if (dataFim) {
-      const end = new Date(dataFim)
-      end.setHours(23, 59, 59, 999)
-      where.createdAt = { ...where.createdAt, lte: end }
+      const parts = dataInicio.split('-')
+      const year = parseInt(parts[0])
+      const month = parseInt(parts[1]) - 1 // mês base 0
+      const day = parseInt(parts[2])
+      // Data local (Brasília) às 00:00:00
+      const localStart = new Date(year, month, day, 0, 0, 0, 0)
+      // Converte para UTC
+      const utcStart = localToUTC(localStart)
+      where.createdAt = { ...where.createdAt, gte: utcStart }
     }
 
-    // Filtro por mesa
+    if (dataFim) {
+      const parts = dataFim.split('-')
+      const year = parseInt(parts[0])
+      const month = parseInt(parts[1]) - 1
+      const day = parseInt(parts[2])
+      // Data local (Brasília) às 23:59:59
+      const localEnd = new Date(year, month, day, 23, 59, 59, 999)
+      const utcEnd = localToUTC(localEnd)
+      where.createdAt = { ...where.createdAt, lte: utcEnd }
+    }
+
     if (mesa) {
       const mesaNumber = parseInt(mesa)
       if (!isNaN(mesaNumber)) {
@@ -44,7 +61,6 @@ export async function GET(request: Request) {
       }
     }
 
-    // Filtro por total
     if (totalMin) {
       const min = parseFloat(totalMin)
       if (!isNaN(min)) {

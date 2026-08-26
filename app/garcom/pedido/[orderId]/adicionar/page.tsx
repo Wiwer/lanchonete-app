@@ -179,12 +179,12 @@ export default function GarcomAdicionarItensPage() {
           ) : (
             <ul className="divide-y divide-gray-200">
               {orderItems.map((item) => (
-                <li key={item.id} className="py-2 flex justify-between items-center text-sm">
+                <li key={item.id} className="py-2 flex justify-between items-center text-sm text-gray-500">
                   <span>{item.quantity}x {item.product.name}</span>
                   <span className="font-medium text-gray-700">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
                 </li>
               ))}
-              <li className="pt-2 font-semibold flex justify-between text-sm">
+              <li className="pt-2 font-semibold flex justify-between text-sm text-gray-500">
                 <span>Total atual</span>
                 <span className="text-green-700">R$ {totalPedido.toFixed(2)}</span>
               </li>
@@ -236,7 +236,7 @@ export default function GarcomAdicionarItensPage() {
                   <div key={item.productId} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
                     <div className="flex-1">
                       <span className="font-medium text-gray-800">{item.name}</span>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 text-gray-800">
                         <button
                           onClick={() => removerDoCarrinho(item.productId)}
                           className="w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded flex items-center justify-center text-sm"

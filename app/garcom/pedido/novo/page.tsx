@@ -217,7 +217,7 @@ export default function GarcomNovoPedidoPage() {
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {cart.map((item) => (
-                  <div key={item.productId} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                  <div key={item.productId} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg text-gray-800">
                     <div className="flex-1">
                       <span className="font-medium text-gray-800">{item.name}</span>
                       <div className="flex items-center gap-2 mt-1">
@@ -227,7 +227,7 @@ export default function GarcomNovoPedidoPage() {
                         >
                           −
                         </button>
-                        <span className="text-sm font-semibold w-6 text-center">{item.quantity}</span>
+                        <span className="text-sm font-semibold w-6 text-center text-gray-800">{item.quantity}</span>
                         <button
                           onClick={() => adicionarAoCarrinho({ id: item.productId, name: item.name, price: item.price, active: true })}
                           className="w-6 h-6 bg-green-500 hover:bg-green-600 text-white rounded flex items-center justify-center text-sm"
