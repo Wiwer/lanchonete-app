@@ -19,12 +19,13 @@ import {
 } from 'recharts'
 
 interface DashboardData {
-  day: { revenue: number; orders: number }
-  week: { revenue: number; orders: number }
-  month: { revenue: number; orders: number }
+  day: { revenue: number; orders: number; avg: number; change: number }
+  week: { revenue: number; orders: number; avg: number; change: number }
+  month: { revenue: number; orders: number; avg: number; change: number }
   topItems: Array<{ name: string; total: number }>
   last7Days: Array<{ date: string; total: number }>
   categorySales: Array<{ name: string; value: number }>
+  hourlyData: Array<{ hora: number; pedidos: number }>
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8']
@@ -71,6 +72,19 @@ export default function DashboardPage() {
     )
   }
 
+  // Formatação de variação percentual
+  const formatChange = (change: number) => {
+    if (change === 0) return '↔️ 0%'
+    const sign = change > 0 ? '📈' : '📉'
+    return `${sign} ${Math.abs(change).toFixed(1)}%`
+  }
+
+  const changeColor = (change: number) => {
+    if (change > 0) return 'text-green-600'
+    if (change < 0) return 'text-red-600'
+    return 'text-gray-500'
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto">
@@ -91,34 +105,49 @@ export default function DashboardPage() {
 
         {/* Cards métricos */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {/* Dia */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Faturamento do Dia</p>
                 <p className="text-3xl font-bold text-gray-800">R$ {data.day.revenue.toFixed(2)}</p>
                 <p className="text-sm text-gray-500 mt-1">{data.day.orders} pedidos</p>
+                <p className="text-sm text-gray-500 mt-1">Ticket médio: R$ {data.day.avg.toFixed(2)}</p>
+                <p className={`text-sm font-medium ${changeColor(data.day.change)}`}>
+                  {formatChange(data.day.change)} em relação a ontem
+                </p>
               </div>
               <span className="text-4xl">📅</span>
             </div>
           </div>
 
+          {/* Semana */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Faturamento da Semana</p>
                 <p className="text-3xl font-bold text-gray-800">R$ {data.week.revenue.toFixed(2)}</p>
                 <p className="text-sm text-gray-500 mt-1">{data.week.orders} pedidos</p>
+                <p className="text-sm text-gray-500 mt-1">Ticket médio: R$ {data.week.avg.toFixed(2)}</p>
+                <p className={`text-sm font-medium ${changeColor(data.week.change)}`}>
+                  {formatChange(data.week.change)} em relação à semana passada
+                </p>
               </div>
               <span className="text-4xl">📆</span>
             </div>
           </div>
 
+          {/* Mês */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">Faturamento do Mês</p>
                 <p className="text-3xl font-bold text-gray-800">R$ {data.month.revenue.toFixed(2)}</p>
                 <p className="text-sm text-gray-500 mt-1">{data.month.orders} pedidos</p>
+                <p className="text-sm text-gray-500 mt-1">Ticket médio: R$ {data.month.avg.toFixed(2)}</p>
+                <p className={`text-sm font-medium ${changeColor(data.month.change)}`}>
+                  {formatChange(data.month.change)} em relação ao mês passado
+                </p>
               </div>
               <span className="text-4xl">📈</span>
             </div>
@@ -173,6 +202,30 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Gráfico de Pedidos por Hora */}
+        <div className="mt-6 bg-white rounded-xl shadow-md p-6">
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">🕐 Distribuição de Pedidos por Hora (últimos 7 dias)</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.hourlyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="hora"
+                  stroke="#6b7280"
+                  fontSize={12}
+                  tickFormatter={(hora) => `${hora}h`}
+                />
+                <YAxis stroke="#6b7280" fontSize={12} />
+                <Tooltip
+                  formatter={(value) => [`${value} pedidos`, '']}
+                  labelFormatter={(hora) => `${hora}h`}
+                />
+                <Bar dataKey="pedidos" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
