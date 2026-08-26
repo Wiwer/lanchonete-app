@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
 import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
+import { Popover } from '@headlessui/react'
 
 interface Category {
   id: string
@@ -12,6 +13,7 @@ interface Category {
 }
 
 interface Product {
+  description: string
   id: string
   name: string
   price: number
@@ -30,8 +32,10 @@ export default function AdminCardapioPage() {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
+    description: '',
     categoryId: '',
   })
+  const [descricaoExpandida, setDescricaoExpandida] = useState(false)
 
   // Estados para os filtros
   const [searchTerm, setSearchTerm] = useState('')
@@ -82,8 +86,9 @@ export default function AdminCardapioPage() {
 
   const handleOpenCreate = () => {
     setEditingProduct(null)
-    setFormData({ name: '', price: '', categoryId: '' })
+    setFormData({ name: '', price: '', description: '', categoryId: '' })
     setShowModal(true)
+    setDescricaoExpandida(false)
   }
 
   const handleOpenEdit = (product: Product) => {
@@ -91,13 +96,15 @@ export default function AdminCardapioPage() {
     setFormData({
       name: product.name,
       price: product.price.toString(),
+      description: product.description || '',
       categoryId: product.categoryId || '',
     })
     setShowModal(true)
+    setDescricaoExpandida(false)
   }
 
   const handleSave = async () => {
-    const { name, price, categoryId } = formData
+    const { name, price, categoryId, description } = formData
     if (!name.trim() || !price) {
       showToast('⚠️ Preencha todos os campos', 'warning')
       return
@@ -111,6 +118,7 @@ export default function AdminCardapioPage() {
         name: name.trim(),
         price: parseFloat(price),
         categoryId: categoryId || null,
+        description: description || null,
       }
 
       const res = await fetch(url, {
@@ -262,11 +270,38 @@ export default function AdminCardapioPage() {
               <tbody>
                 {filteredProducts.map((product) => (
                   <tr key={product.id} className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4">
-                      <span className={`font-medium ${!product.active ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
-                        {product.name}
-                      </span>
-                    </td>
+              <td className="py-3 px-4">
+                <div className="flex items-center gap-1">
+                  <span
+                    className={`font-medium ${!product.active ? 'text-gray-500 line-through' : 'text-gray-800'}`}
+                  >
+                    {product.name}
+                  </span>
+                  {product.description && (
+                    <Popover className="relative">
+                      <Popover.Button className="text-gray-400 hover:text-blue-500 transition-colors focus:outline-none">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-5 h-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+                          />
+                        </svg>
+                      </Popover.Button>
+                      <Popover.Panel className="absolute z-10 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm text-gray-700">
+                        {product.description}
+                      </Popover.Panel>
+                    </Popover>
+                  )}
+                </div>
+              </td>
                     <td className="py-3 px-4">
                       <span className={`font-medium ${!product.active ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
                         R$ {product.price.toFixed(2)}
@@ -350,7 +385,46 @@ export default function AdminCardapioPage() {
                 placeholder="Ex: 25.00"
               />
             </div>
-
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-800 mb-1">Descrição</label>
+              <div className="relative">
+                {!descricaoExpandida ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400"
+                      placeholder="Descrição do produto (opcional)"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setDescricaoExpandida(true)}
+                      className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium whitespace-nowrap"
+                    >
+                      📝
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <textarea
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={4}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-400 resize-y"
+                      placeholder="Descrição completa do produto..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setDescricaoExpandida(false)}
+                      className="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium"
+                    >
+                      🔽 Recolher
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-800 mb-1">Categoria</label>
               <select

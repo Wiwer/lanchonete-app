@@ -47,7 +47,12 @@ export default async function Home() {
               <ul className="divide-y divide-gray-200">
                 {prods.map((product) => (
                   <li key={product.id} className="py-3 flex justify-between items-center">
-                    <span className="text-lg font-medium text-gray-700">{product.name}</span>
+                    <div>
+                      <span className="text-lg font-medium text-gray-700">{product.name}</span>
+                      {product.description && (
+                        <p className="text-sm text-gray-500">{product.description}</p>
+                      )}
+                    </div>
                     <span className="text-lg font-bold text-green-600">
                       R$ {product.price.toFixed(2)}
                     </span>

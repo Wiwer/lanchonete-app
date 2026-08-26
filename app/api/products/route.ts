@@ -8,19 +8,14 @@ const adapter = new PrismaBetterSqlite3({
 })
 const prisma = new PrismaClient({ adapter })
 
-// GET - Listar produtos (ativos e inativos) com categoria
+// GET - Listar produtos com categoria
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const apenasAtivos = searchParams.get('ativos') === 'true'
-    const categoryId = searchParams.get('categoryId')
-
-    const where: any = {}
-    if (apenasAtivos) where.active = true
-    if (categoryId) where.categoryId = categoryId
 
     const products = await prisma.product.findMany({
-      where,
+      where: apenasAtivos ? { active: true } : undefined,
       include: {
         category: true,
       },
@@ -36,11 +31,11 @@ export async function GET(request: Request) {
   }
 }
 
-// POST - Criar novo produto (com categoria)
+// POST - Criar novo produto
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, price, categoryId } = body
+    const { name, price, description, categoryId } = body
 
     if (!name || name.trim() === '') {
       return NextResponse.json({ error: 'Nome é obrigatório' }, { status: 400 })
@@ -56,7 +51,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Já existe um produto com este nome' }, { status: 409 })
     }
 
-    // Verifica se a categoria existe
+    // Verifica se a categoria existe (se fornecida)
     if (categoryId) {
       const category = await prisma.category.findUnique({
         where: { id: categoryId },
@@ -70,8 +65,9 @@ export async function POST(request: Request) {
       data: {
         name: name.trim(),
         price: Number(price),
+        description: description?.trim() || null,
         categoryId: categoryId || null,
-        active: false, // cria desativado por padrão
+        active: false,
       },
       include: { category: true },
     })
@@ -82,11 +78,11 @@ export async function POST(request: Request) {
   }
 }
 
-// PUT - Atualizar produto (nome, preço, categoria, ativo)
+// PUT - Atualizar produto
 export async function PUT(request: Request) {
   try {
     const body = await request.json()
-    const { id, name, price, active, categoryId } = body
+    const { id, name, price, active, description, categoryId } = body
 
     if (!id) {
       return NextResponse.json({ error: 'ID do produto é obrigatório' }, { status: 400 })
@@ -99,7 +95,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Produto não encontrado' }, { status: 404 })
     }
 
-    // Verifica se a categoria existe (se foi fornecida)
+    // Verifica se a categoria existe (se fornecida)
     if (categoryId) {
       const category = await prisma.category.findUnique({
         where: { id: categoryId },
@@ -133,6 +129,9 @@ export async function PUT(request: Request) {
     if (active !== undefined) {
       data.active = active
     }
+    if (description !== undefined) {
+      data.description = description?.trim() || null
+    }
     if (categoryId !== undefined) {
       data.categoryId = categoryId || null
     }
@@ -149,7 +148,7 @@ export async function PUT(request: Request) {
   }
 }
 
-// DELETE - Desativar produto (active = false)
+// DELETE - Desativar produto
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
