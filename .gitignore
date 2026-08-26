@@ -55,4 +55,4 @@ skills-lock.json
 
 # Arquivos temporários
 populate-cardapio.ts
-/docs/
+app\api\docs
