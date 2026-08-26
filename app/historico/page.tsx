@@ -145,7 +145,7 @@ export default function HistoricoPage() {
                 name="dataInicio"
                 value={filtros.dataInicio}
                 onChange={handleFiltroChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500"
               />
             </div>
             <div>
@@ -155,7 +155,7 @@ export default function HistoricoPage() {
                 name="dataFim"
                 value={filtros.dataFim}
                 onChange={handleFiltroChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500"
               />
             </div>
             <div>
@@ -166,7 +166,7 @@ export default function HistoricoPage() {
                 placeholder="Número da mesa"
                 value={filtros.mesa}
                 onChange={handleFiltroChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500"
               />
             </div>
             <div>
@@ -178,7 +178,7 @@ export default function HistoricoPage() {
                   placeholder="Mín"
                   value={filtros.totalMin}
                   onChange={handleFiltroChange}
-                  className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500"
                 />
                 <input
                   type="number"
@@ -186,7 +186,7 @@ export default function HistoricoPage() {
                   placeholder="Máx"
                   value={filtros.totalMax}
                   onChange={handleFiltroChange}
-                  className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500"
                 />
               </div>
             </div>
