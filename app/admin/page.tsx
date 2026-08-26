@@ -85,6 +85,17 @@ export default function AdminPage() {
           </div>
         </Link>
 
+        <Link
+          href="/admin/dashboard"
+          className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow flex items-center gap-4"
+        >
+          <span className="text-5xl">📊</span>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
+            <p className="text-gray-500">Visualizar métricas de vendas</p>
+          </div>
+        </Link>
+
 
         </div>
 
