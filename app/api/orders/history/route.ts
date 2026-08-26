@@ -52,11 +52,13 @@ export async function GET(request: Request) {
       where.createdAt = { ...where.createdAt, lte: utcEnd }
     }
 
-    if (mesa) {
-      const mesaNumber = parseInt(mesa)
-      if (!isNaN(mesaNumber)) {
+    // --- Filtro por múltiplas mesas ---
+    const mesasParam = searchParams.get('mesas')
+    if (mesasParam) {
+      const mesaNumbers = mesasParam.split(',').map(Number).filter(n => !isNaN(n))
+      if (mesaNumbers.length > 0) {
         where.table = {
-          number: mesaNumber,
+          number: { in: mesaNumbers },
         }
       }
     }
