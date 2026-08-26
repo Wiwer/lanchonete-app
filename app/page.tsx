@@ -1,3 +1,4 @@
+// app/page.tsx
 import { PrismaClient } from '@prisma/client'
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 import Link from 'next/link'
@@ -8,64 +9,62 @@ const adapter = new PrismaBetterSqlite3({
 const prisma = new PrismaClient({ adapter })
 
 export default async function Home() {
-  const products = await prisma.product.findMany({
-    where: { active: true },
+  const categories = await prisma.category.findMany({
+    orderBy: { order: 'asc' },
     include: {
-      category: true,
+      products: {
+        where: { active: true },
+        orderBy: { name: 'asc' },
+      },
     },
-    orderBy: [
-      { category: { name: 'asc' } },
-      { name: 'asc' },
-    ],
   })
 
-  // Agrupar produtos por categoria
-  const groupedProducts = products.reduce((acc, product) => {
-    const categoryName = product.category?.name || 'Outros'
-    if (!acc[categoryName]) {
-      acc[categoryName] = []
-    }
-    acc[categoryName].push(product)
-    return acc
-  }, {} as Record<string, typeof products>)
+    // Linha de depuração (vai aparecer no terminal do servidor)
+  console.log('📍 Categorias na ordem:', categories.map(c => ({ name: c.name, order: c.order })))
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">🍔 Cardápio da Lanchonete</h1>
+          <Link
+            href="/admin"
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            ⚙️ Admin
+          </Link>
         </div>
 
-        {Object.keys(groupedProducts).length === 0 ? (
+        {categories.length === 0 ? (
           <p className="text-gray-500 text-center py-8">Nenhum produto disponível no momento.</p>
         ) : (
-          Object.entries(groupedProducts).map(([categoryName, prods]) => (
-            <div key={categoryName} className="mb-8 last:mb-0">
-              <h2 className="text-xl font-semibold text-gray-700 mb-3 border-b pb-2">
-                {categoryName}
-              </h2>
-              <ul className="divide-y divide-gray-200">
-                {prods.map((product) => (
-                  <li key={product.id} className="py-3 flex justify-between items-center">
-                    <div>
-                      <span className="text-lg font-medium text-gray-700">{product.name}</span>
-                      {product.description && (
-                        <p className="text-sm text-gray-500">{product.description}</p>
-                      )}
-                    </div>
-                    <span className="text-lg font-bold text-green-600">
-                      R$ {product.price.toFixed(2)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))
+          categories.map((category) => {
+            const products = category.products
+            if (products.length === 0) return null
+            return (
+              <div key={category.id} className="mb-8 last:mb-0">
+                <h2 className="text-xl font-semibold text-gray-700 mb-3 border-b pb-2">
+                  {category.name}
+                </h2>
+                <ul className="divide-y divide-gray-200">
+                  {products.map((product) => (
+                    <li key={product.id} className="py-3 flex justify-between items-center">
+                      <div>
+                        <span className="text-lg font-medium text-gray-700">{product.name}</span>
+                        {product.description && (
+                          <span className="ml-2 text-sm text-gray-400">- {product.description}</span>
+                        )}
+                      </div>
+                      <span className="text-lg font-bold text-green-600">
+                        R$ {product.price.toFixed(2)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })
         )}
-
-        <div className="mt-6 text-center text-sm text-gray-400">
-          ✅ Cardápio atualizado com categorias!
-        </div>
       </div>
     </div>
   )

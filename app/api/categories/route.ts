@@ -12,10 +12,13 @@ const prisma = new PrismaClient({ adapter })
 export async function GET() {
   try {
     const categories = await prisma.category.findMany({
-      orderBy: { name: 'asc' },
+      orderBy: [
+        { order: 'asc' },
+        { name: 'asc' }
+      ],
       include: {
         _count: {
-          select: { products: true }, // <-- conta os produtos
+          select: { products: true },
         },
       },
     })

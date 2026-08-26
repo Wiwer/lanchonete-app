@@ -4,6 +4,22 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { useSortable } from '@dnd-kit/sortable'
 
 interface Category {
   id: string
@@ -22,6 +38,30 @@ interface Product {
   active: boolean
 }
 
+const SortableItem = ({ category }: { category: Category }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: category.id,
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-grab hover:bg-gray-100 transition-colors"
+    >
+      <span className="font-medium text-gray-800">{category.name}</span>
+      <span className="text-sm text-gray-400">↕</span>
+    </div>
+  )
+}
 export default function AdminCategoriasPage() {
   const { showToast } = useToast()
   const [categories, setCategories] = useState<Category[]>([])
@@ -37,6 +77,9 @@ export default function AdminCategoriasPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [statusFilter, setStatusFilter] = useState<'todos' | 'ativo' | 'inativo'>('todos')
+  const [showReorderModal, setShowReorderModal] = useState(false)
+  const [orderedCategories, setOrderedCategories] = useState<Category[]>([])
+  const [isReordering, setIsReordering] = useState(false)
 
   const fetchCategories = async () => {
     try {
@@ -65,7 +108,12 @@ export default function AdminCategoriasPage() {
   useEffect(() => {
     Promise.all([fetchCategories(), fetchProducts()])
   }, [])
-
+const sensors = useSensors(
+  useSensor(PointerSensor),
+  useSensor(KeyboardSensor, {
+    coordinateGetter: sortableKeyboardCoordinates,
+  })
+)
   const handleOpenCreate = () => {
     setEditingCategory(null)
     setFormData({ name: '', description: '' })
@@ -140,7 +188,43 @@ export default function AdminCategoriasPage() {
       setIsDeleting(false)
     }
   }
+// Funções para reordenar categorias
+const openReorderModal = () => {
+  setOrderedCategories([...categories])
+  setShowReorderModal(true)
+}
 
+const closeReorderModal = () => {
+  setShowReorderModal(false)
+  setOrderedCategories([])
+}
+
+const saveReorder = async () => {
+  setIsReordering(true)
+  try {
+    const payload = orderedCategories.map((cat, index) => ({
+      id: cat.id,
+      order: index + 1,
+    }))
+    const res = await fetch('/api/categories/reorder', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categories: payload }),
+    })
+    if (!res.ok) {
+      const error = await res.json()
+      showToast(`❌ ${error.error}`, 'error')
+      return
+    }
+    showToast('✅ Ordem das categorias atualizada!', 'success')
+    fetchCategories()
+    closeReorderModal()
+  } catch (error) {
+    showToast('❌ Erro ao reordenar', 'error')
+  } finally {
+    setIsReordering(false)
+  }
+}
   // Função para abrir o modal de produtos
   const openProductsModal = (category?: Category) => {
     if (category) {
@@ -218,6 +302,12 @@ export default function AdminCategoriasPage() {
               className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
             >
               <span>+</span> Nova Categoria
+            </button>
+            <button
+              onClick={openReorderModal}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
+            >
+              🔄 Ordenar Categorias
             </button>
           </div>
 
@@ -442,6 +532,67 @@ export default function AdminCategoriasPage() {
           </div>
         </div>
       )}
+      {showReorderModal && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          onClick={(e) => e.target === e.currentTarget && closeReorderModal()}
+        >
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full max-h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">🔄 Ordenar Categorias</h2>
+              <button
+                onClick={closeReorderModal}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Arraste as categorias para reordená-las.</p>
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={({ active, over }) => {
+                if (!over) return
+                const oldIndex = orderedCategories.findIndex((c) => c.id === active.id)
+                const newIndex = orderedCategories.findIndex((c) => c.id === over.id)
+                if (oldIndex !== newIndex) {
+                  setOrderedCategories(arrayMove(orderedCategories, oldIndex, newIndex))
+                }
+              }}
+            >
+              <SortableContext items={orderedCategories.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                <div className="flex-1 overflow-y-auto space-y-2 min-h-[150px]">
+                  {orderedCategories.map((cat) => (
+                    <SortableItem key={cat.id} category={cat} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={closeReorderModal}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-800 font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={saveReorder}
+                disabled={isReordering}
+                className={`px-4 py-2 rounded-lg transition-colors text-white font-medium ${
+                  isReordering
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-purple-600 hover:bg-purple-700'
+                }`}
+              >
+                {isReordering ? 'Salvando...' : 'Salvar Ordem'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  
+)
 }
