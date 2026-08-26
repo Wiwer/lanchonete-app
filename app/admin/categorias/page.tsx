@@ -297,11 +297,12 @@ const saveReorder = async () => {
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-800">Categorias</h2>
+            <div></div>       
             <button
               onClick={handleOpenCreate}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
             >
-              <span>+</span> Nova Categoria
+              <span> + </span> Nova Categoria
             </button>
             <button
               onClick={openReorderModal}
@@ -310,6 +311,7 @@ const saveReorder = async () => {
               🔄 Ordenar Categorias
             </button>
           </div>
+          
 
           <div className="overflow-x-auto">
             <table className="w-full">

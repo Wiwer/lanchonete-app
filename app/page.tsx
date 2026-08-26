@@ -27,12 +27,6 @@ export default async function Home() {
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">🍔 Cardápio da Lanchonete</h1>
-          <Link
-            href="/admin"
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-          >
-            ⚙️ Admin
-          </Link>
         </div>
 
         {categories.length === 0 ? (
