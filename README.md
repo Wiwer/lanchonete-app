@@ -5,9 +5,9 @@ Sistema completo para gerenciamento de lanchonete desenvolvido com Next.js, Pris
 ## ✨ Funcionalidades
 
 - 📋 **Cardápio** - Visualizar produtos ativos
-- 📊 **Admin** - Gerenciar cardápio, mesas e fechamentos
+- 📊 **Admin** - Gerenciar cardápio, mesas e Pagamentos
 - 👨‍🍳 **Garçom** - Abrir mesas, criar pedidos e adicionar itens
-- 💳 **Fechamentos** - Confirmar pagamentos
+- 💳 **Pagamentos** - Confirmar pagamentos
 - 📜 **Histórico** - Visualizar pedidos finalizados
 
 ## 🛠️ Tecnologias

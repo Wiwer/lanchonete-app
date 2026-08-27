@@ -30,7 +30,7 @@ export default async function FechamentosPage() {
           <div className="flex flex-col md:flex-row justify-center items-center gap-3">
             <div className="flex items-center gap-3">
               <span className="text-4xl">💳</span>
-              <h1 className="text-3xl font-bold text-gray-800">Fechamentos</h1>
+              <h1 className="text-3xl font-bold text-gray-800">Pagamentos</h1>
               <span className="bg-yellow-100 text-yellow-800 text-sm font-semibold px-3 py-1 rounded-full">
                 {orders.length} aguardando
               </span>

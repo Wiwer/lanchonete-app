@@ -61,10 +61,10 @@ export default async function MesasPage() {
                 📋 Gerenciar Cardápio
               </Link>
               <Link
-                href="/fechamentos"
+                href="/caixa"
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-white font-medium flex items-center gap-2 shadow-md hover:shadow-lg"
               >
-                💳 Fechamentos
+                💳 Pagamentos
                 {totalAguardando > 0 && (
                   <span className="bg-white text-purple-600 text-xs font-bold px-2 py-0.5 rounded-full">
                     {totalAguardando}
