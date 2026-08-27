@@ -185,7 +185,10 @@ export default function AdminCardapioPage() {
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-900">📋 Gerenciar Cardápio</h1>
-            <Link href="/admin" className="text-blue-600 hover:text-blue-800 font-medium">
+            <Link
+              href="/admin"
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium flex items-center gap-2"
+            >
               ← Voltar ao Admin
             </Link>
           </div>
