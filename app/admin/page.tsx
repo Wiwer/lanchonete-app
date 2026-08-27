@@ -95,6 +95,19 @@ export default function AdminPage() {
             <p className="text-gray-500">Visualizar métricas de vendas</p>
           </div>
         </Link>
+        <Link
+  href="#"
+  className="relative bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow flex items-center gap-4 opacity-75 cursor-not-allowed"
+>
+  <span className="absolute top-4 right-4 bg-amber-100 text-amber-800 text-base font-bold px-3.5 py-3 rounded-full flex items-center gap-1 border-amber-300">
+    🔒 Em breve
+  </span>
+  <span className="text-5xl">🛵</span>
+  <div>
+    <h2 className="text-2xl font-bold text-gray-800">Delivery</h2>
+    <p className="text-gray-500">Gerenciar pedidos de delivery</p>
+  </div>
+</Link>
 
 
         </div>
