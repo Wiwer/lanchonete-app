@@ -64,7 +64,7 @@ export default async function MesasPage() {
                 href="/caixa"
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-white font-medium flex items-center gap-2 shadow-md hover:shadow-lg"
               >
-                💳 Pagamentos
+                💳 
                 {totalAguardando > 0 && (
                   <span className="bg-white text-purple-600 text-xs font-bold px-2 py-0.5 rounded-full">
                     {totalAguardando}
@@ -95,7 +95,7 @@ export default async function MesasPage() {
         </div>
 
         <div className="mt-8 text-center text-sm text-gray-400">
-          ✅ Check-point 2: Listagem de mesas com status (agora interativas)
+          ✅ Mesas: Listagem de mesas
         </div>
       </div>
     </div>
