@@ -73,6 +73,12 @@ model GerenteConfig {
   updatedAt DateTime @updatedAt
 }
 
+model SystemConfig {
+  id          String   @id @default("single")
+  maintenance Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+}
+
 enum OrderStatus {
   OPEN
   WAITING_PAYMENT
