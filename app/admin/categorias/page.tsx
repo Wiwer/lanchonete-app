@@ -17,9 +17,10 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
+  useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useSortable } from '@dnd-kit/sortable'
+import { apiClient } from '@/app/lib/apiClient'
 
 interface Category {
   id: string
@@ -62,6 +63,7 @@ const SortableItem = ({ category }: { category: Category }) => {
     </div>
   )
 }
+
 export default function AdminCategoriasPage() {
   const { showToast } = useToast()
   const [categories, setCategories] = useState<Category[]>([])
@@ -83,37 +85,35 @@ export default function AdminCategoriasPage() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('/api/categories')
-      if (!res.ok) throw new Error('Erro ao buscar categorias')
-      const data = await res.json()
+      const data = await apiClient('/api/categories', { method: 'GET' }, false)
       setCategories(data)
-    } catch (error) {
-      showToast('❌ Erro ao carregar categorias', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao carregar categorias'}`, 'error')
     } finally {
       setLoading(false)
     }
   }
 
   const fetchProducts = async () => {
-  try {
-    const res = await fetch('/api/products')
-    if (!res.ok) throw new Error('Erro ao buscar produtos')
-    const data = await res.json()
-    setProducts(data)
-  } catch (error) {
-    showToast('❌ Erro ao carregar produtos', 'error')
+    try {
+      const data = await apiClient('/api/products', { method: 'GET' }, false)
+      setProducts(data)
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao carregar produtos'}`, 'error')
+    }
   }
-}
 
   useEffect(() => {
     Promise.all([fetchCategories(), fetchProducts()])
   }, [])
-const sensors = useSensors(
-  useSensor(PointerSensor),
-  useSensor(KeyboardSensor, {
-    coordinateGetter: sortableKeyboardCoordinates,
-  })
-)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
   const handleOpenCreate = () => {
     setEditingCategory(null)
     setFormData({ name: '', description: '' })
@@ -145,23 +145,13 @@ const sensors = useSensors(
         description: description.trim() || null,
       }
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        showToast(`❌ ${error.error}`, 'error')
-        return
-      }
+      await apiClient(url, { method, body: JSON.stringify(body) }, false)
 
       showToast(editingCategory ? '✅ Categoria atualizada!' : '✅ Categoria criada!', 'success')
       setShowModal(false)
       fetchCategories()
-    } catch (error) {
-      showToast('❌ Erro ao salvar categoria', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao salvar categoria'}`, 'error')
     }
   }
 
@@ -170,61 +160,49 @@ const sensors = useSensors(
 
     setIsDeleting(true)
     try {
-      const res = await fetch(`/api/categories?id=${id}`, {
-        method: 'DELETE',
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        showToast(`❌ ${error.error}`, 'error')
-        return
-      }
-
+      await apiClient(`/api/categories?id=${id}`, { method: 'DELETE' }, false)
       showToast(`✅ Categoria "${name}" excluída com sucesso!`, 'success')
       fetchCategories()
-    } catch (error) {
-      showToast('❌ Erro ao excluir categoria', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao excluir categoria'}`, 'error')
     } finally {
       setIsDeleting(false)
     }
   }
-// Funções para reordenar categorias
-const openReorderModal = () => {
-  setOrderedCategories([...categories])
-  setShowReorderModal(true)
-}
 
-const closeReorderModal = () => {
-  setShowReorderModal(false)
-  setOrderedCategories([])
-}
-
-const saveReorder = async () => {
-  setIsReordering(true)
-  try {
-    const payload = orderedCategories.map((cat, index) => ({
-      id: cat.id,
-      order: index + 1,
-    }))
-    const res = await fetch('/api/categories/reorder', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ categories: payload }),
-    })
-    if (!res.ok) {
-      const error = await res.json()
-      showToast(`❌ ${error.error}`, 'error')
-      return
-    }
-    showToast('✅ Ordem das categorias atualizada!', 'success')
-    fetchCategories()
-    closeReorderModal()
-  } catch (error) {
-    showToast('❌ Erro ao reordenar', 'error')
-  } finally {
-    setIsReordering(false)
+  // Funções para reordenar categorias
+  const openReorderModal = () => {
+    setOrderedCategories([...categories])
+    setShowReorderModal(true)
   }
-}
+
+  const closeReorderModal = () => {
+    setShowReorderModal(false)
+    setOrderedCategories([])
+  }
+
+  const saveReorder = async () => {
+    setIsReordering(true)
+    try {
+      const payload = orderedCategories.map((cat, index) => ({
+        id: cat.id,
+        order: index + 1,
+      }))
+      await apiClient('/api/categories/reorder', {
+        method: 'PUT',
+        body: JSON.stringify({ categories: payload }),
+      }, false)
+
+      showToast('✅ Ordem das categorias atualizada!', 'success')
+      fetchCategories()
+      closeReorderModal()
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao reordenar'}`, 'error')
+    } finally {
+      setIsReordering(false)
+    }
+  }
+
   // Função para abrir o modal de produtos
   const openProductsModal = (category?: Category) => {
     if (category) {
@@ -240,40 +218,33 @@ const saveReorder = async () => {
   }
 
   const handleToggleActive = async (productId: string, currentActive: boolean) => {
-  try {
-    const res = await fetch('/api/products', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: productId,
-        active: !currentActive,
-      }),
-    })
+    try {
+      await apiClient('/api/products', {
+        method: 'PUT',
+        body: JSON.stringify({
+          id: productId,
+          active: !currentActive,
+        }),
+      }, false)
 
-    if (!res.ok) {
-      const error = await res.json()
-      showToast(`❌ ${error.error}`, 'error')
-      return
+      await fetchProducts()
+      showToast(currentActive ? '✅ Produto desativado' : '✅ Produto ativado', 'success')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao alterar status'}`, 'error')
     }
-
-    // Recarregar a lista de produtos para atualizar o modal
-    await fetchProducts()
-    showToast(currentActive ? '✅ Produto desativado' : '✅ Produto ativado', 'success')
-  } catch (error) {
-    showToast('❌ Erro ao alterar status', 'error')
   }
-}
 
   const filteredProducts = selectedCategory
-  ? products
-      .filter((product) => product.categoryId === selectedCategory.id)
-      .filter((product) => {
-        if (statusFilter === 'todos') return true
-        if (statusFilter === 'ativo') return product.active === true
-        if (statusFilter === 'inativo') return product.active === false
-        return true
-      })
-  : []
+    ? products
+        .filter((product) => product.categoryId === selectedCategory.id)
+        .filter((product) => {
+          if (statusFilter === 'todos') return true
+          if (statusFilter === 'ativo') return product.active === true
+          if (statusFilter === 'inativo') return product.active === false
+          return true
+        })
+    : []
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
@@ -300,21 +271,21 @@ const saveReorder = async () => {
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-800">Categorias</h2>
-            <div></div>       
-            <button
-              onClick={handleOpenCreate}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
-            >
-              <span> + </span> Nova Categoria
-            </button>
-            <button
-              onClick={openReorderModal}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
-            >
-              🔄 Ordenar Categorias
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleOpenCreate}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
+              >
+                <span>+</span> Nova Categoria
+              </button>
+              <button
+                onClick={openReorderModal}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
+              >
+                🔄 Ordenar Categorias
+              </button>
+            </div>
           </div>
-          
 
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -537,6 +508,7 @@ const saveReorder = async () => {
           </div>
         </div>
       )}
+
       {showReorderModal && (
         <div
           className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
@@ -598,6 +570,5 @@ const saveReorder = async () => {
         </div>
       )}
     </div>
-  
-)
+  )
 }

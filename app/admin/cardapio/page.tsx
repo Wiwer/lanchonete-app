@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
 import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
 import { Popover } from '@headlessui/react'
+import { apiClient } from '@/app/lib/apiClient'
 
 interface Category {
   id: string
@@ -42,25 +43,21 @@ export default function AdminCardapioPage() {
   const [filterCategory, setFilterCategory] = useState('')
   const [filterStatus, setFilterStatus] = useState('ativo') // 'todos', 'ativo', 'inativo'
 
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch('/api/products')
-      if (!res.ok) throw new Error('Erro ao buscar produtos')
-      const data = await res.json()
-      setProducts(data)
-    } catch (error) {
-      showToast('❌ Erro ao carregar produtos', 'error')
-    }
+ const fetchProducts = async () => {
+  try {
+    const data = await apiClient('/api/products', { method: 'GET' }, false)
+    setProducts(data)
+  } catch (error: any) {
+    showToast(`❌ ${error.message || 'Erro ao carregar produtos'}`, 'error')
   }
+}
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('/api/categories')
-      if (!res.ok) throw new Error('Erro ao buscar categorias')
-      const data = await res.json()
+      const data = await apiClient('/api/categories', { method: 'GET' }, false)
       setCategories(data)
-    } catch (error) {
-      showToast('❌ Erro ao carregar categorias', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao carregar categorias'}`, 'error')
     }
   }
 
@@ -103,67 +100,52 @@ export default function AdminCardapioPage() {
     setDescricaoExpandida(false)
   }
 
-  const handleSave = async () => {
-    const { name, price, categoryId, description } = formData
-    if (!name.trim() || !price) {
-      showToast('⚠️ Preencha todos os campos', 'warning')
-      return
-    }
-
-    try {
-      const url = '/api/products'
-      const method = editingProduct ? 'PUT' : 'POST'
-      const body = {
-        id: editingProduct?.id,
-        name: name.trim(),
-        price: parseFloat(price),
-        categoryId: categoryId || null,
-        description: description || null,
-      }
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        showToast(`❌ ${error.error}`, 'error')
-        return
-      }
-
-      showToast(editingProduct ? '✅ Produto atualizado!' : '✅ Produto criado!', 'success')
-      setShowModal(false)
-      fetchProducts()
-    } catch (error) {
-      showToast('❌ Erro ao salvar produto', 'error')
-    }
+const handleSave = async () => {
+  const { name, price, categoryId, description } = formData
+  if (!name.trim() || !price) {
+    showToast('⚠️ Preencha todos os campos', 'warning')
+    return
   }
 
-  const handleToggleActive = async (product: Product) => {
-    try {
-      const res = await fetch('/api/products', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: product.id,
-          active: !product.active,
-        }),
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        showToast(`❌ ${error.error}`, 'error')
-        return
-      }
-
-      showToast(product.active ? '✅ Produto desativado' : '✅ Produto ativado', 'success')
-      fetchProducts()
-    } catch (error) {
-      showToast('❌ Erro ao alterar status', 'error')
+  try {
+    const url = '/api/products'
+    const method = editingProduct ? 'PUT' : 'POST'
+    const body = {
+      id: editingProduct?.id,
+      name: name.trim(),
+      price: parseFloat(price),
+      categoryId: categoryId || null,
+      description: description || null,
     }
+
+    await apiClient(url, {
+      method,
+      body: JSON.stringify(body),
+    }, false)
+
+    showToast(editingProduct ? '✅ Produto atualizado!' : '✅ Produto criado!', 'success')
+    setShowModal(false)
+    fetchProducts()
+  } catch (error: any) {
+    showToast(`❌ ${error.message || 'Erro ao salvar produto'}`, 'error')
   }
+}
+
+const handleToggleActive = async (product: Product) => {
+  try {
+    await apiClient('/api/products', {
+      method: 'PUT',
+      body: JSON.stringify({
+        id: product.id,
+        active: !product.active,
+      }),
+    }, false)
+    showToast(product.active ? '✅ Produto desativado' : '✅ Produto ativado', 'success')
+    fetchProducts()
+  } catch (error: any) {
+    showToast(`❌ ${error.message || 'Erro ao alterar status'}`, 'error')
+  }
+}
 
   const limparFiltros = () => {
     setSearchTerm('')

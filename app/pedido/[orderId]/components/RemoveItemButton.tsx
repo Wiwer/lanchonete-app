@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/app/context/ToastContext'
+import { apiClient } from '@/app/lib/apiClient' // <-- NOVA IMPORTAÇÃO
 
 interface RemoveItemButtonProps {
   orderId: string
@@ -19,26 +20,19 @@ export default function RemoveItemButton({
 
   const handleDecrease = async () => {
     try {
-      const res = await fetch('/api/orders', {
+      await apiClient('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'removeItem',
           orderId,
           itemId,
           subAction: 'decrease',
         }),
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        showToast(`❌ ${error.error}`, 'error')
-        return
-      }
+      }, false)
 
       router.refresh()
-    } catch (error) {
-      showToast('❌ Erro ao diminuir quantidade.', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao diminuir quantidade.'}`, 'error')
     }
   }
 
@@ -46,26 +40,19 @@ export default function RemoveItemButton({
     if (!confirm('Remover este item completamente?')) return
 
     try {
-      const res = await fetch('/api/orders', {
+      await apiClient('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'removeItem',
           orderId,
           itemId,
           subAction: 'remove',
         }),
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        showToast(`❌ ${error.error}`, 'error')
-        return
-      }
+      }, false)
 
       router.refresh()
-    } catch (error) {
-      showToast('❌ Erro ao remover item.', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao remover item.'}`, 'error')
     }
   }
 

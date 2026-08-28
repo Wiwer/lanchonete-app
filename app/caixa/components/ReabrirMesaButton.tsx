@@ -1,6 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/app/context/ToastContext'
+import { apiClient } from '@/app/lib/apiClient' // <-- NOVA IMPORTAÇÃO
 
 interface ReabrirMesaButtonProps {
   orderId: string
@@ -12,6 +14,7 @@ export default function ReabrirMesaButton({
   tableNumber,
 }: ReabrirMesaButtonProps) {
   const router = useRouter()
+  const { showToast } = useToast()
 
   const handleReabrir = async () => {
     if (!confirm(`Deseja reabrir a mesa ${tableNumber} para fazer alterações?`)) {
@@ -19,25 +22,18 @@ export default function ReabrirMesaButton({
     }
 
     try {
-      const res = await fetch('/api/orders', {
+      const order = await apiClient('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'reopen',
           orderId,
         }),
-      })
+      }, false)
 
-      if (!res.ok) {
-        const error = await res.json()
-        alert(`Erro: ${error.error}`)
-        return
-      }
-
-      const order = await res.json()
+      showToast(`✅ Mesa ${tableNumber} reaberta com sucesso!`, 'success')
       router.push(`/pedido/${order.id}`)
-    } catch (error) {
-      alert('Erro ao reabrir mesa.')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao reabrir mesa.'}`, 'error')
     }
   }
 

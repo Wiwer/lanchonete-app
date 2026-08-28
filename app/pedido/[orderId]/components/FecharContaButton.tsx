@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/app/context/ToastContext'
+import { apiClient } from '@/app/lib/apiClient' // <-- NOVA IMPORTAÇÃO
 
 interface FecharContaButtonProps {
   orderId: string
@@ -20,25 +21,18 @@ export default function FecharContaButton({ orderId, total }: FecharContaButtonP
     if (!confirm(mensagem)) return
 
     try {
-      const res = await fetch('/api/orders', {
+      await apiClient('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'close',
           orderId,
         }),
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        showToast(`❌ Erro: ${error.error}`, 'error')
-        return
-      }
+      }, false)
 
       showToast('✅ Conta enviada para fechamento!', 'success')
       router.refresh()
-    } catch (error) {
-      showToast('❌ Erro ao fechar conta. Tente novamente.', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao fechar conta.'}`, 'error')
     }
   }
 

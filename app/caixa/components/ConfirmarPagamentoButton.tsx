@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/app/context/ToastContext'
+import { apiClient } from '@/app/lib/apiClient' // <-- NOVA IMPORTAÇÃO
 
 interface ConfirmarPagamentoButtonProps {
   orderId: string
@@ -23,25 +24,18 @@ export default function ConfirmarPagamentoButton({
     }
 
     try {
-      const res = await fetch('/api/orders', {
+      await apiClient('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'confirmPayment',
           orderId,
         }),
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        showToast(`❌ Erro: ${error.error}`, 'error')
-        return
-      }
+      }, false)
 
       showToast(`✅ Pagamento da mesa ${tableNumber} confirmado!`, 'success')
       router.refresh()
-    } catch (error) {
-      showToast('❌ Erro ao confirmar pagamento.', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao confirmar pagamento.'}`, 'error')
     }
   }
 

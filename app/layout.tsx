@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { ToastProvider } from './context/ToastContext'
 import Toast from './components/Toast'
+import ErrorBoundary from '@/app/components/ErrorBoundary'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,8 +22,10 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={inter.className}>
         <ToastProvider>
-          {children}
-          <Toast />
+          <ErrorBoundary>
+            {children}
+            <Toast />
+          </ErrorBoundary>
         </ToastProvider>
       </body>
     </html>

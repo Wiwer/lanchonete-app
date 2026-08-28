@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
 import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
+import { apiClient } from '@/app/lib/apiClient' // <-- NOVA IMPORTAÇÃO
 
 interface OrderItem {
   id: string
@@ -50,12 +51,10 @@ export default function HistoricoPage() {
   // Buscar lista de mesas
   const fetchTables = async () => {
     try {
-      const res = await fetch('/api/tables')
-      if (!res.ok) throw new Error('Erro ao buscar mesas')
-      const data = await res.json()
+      const data = await apiClient('/api/tables', { method: 'GET' }, false)
       setTables(data)
-    } catch (error) {
-      showToast('❌ Erro ao carregar mesas', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao carregar mesas'}`, 'error')
     }
   }
 
@@ -71,18 +70,12 @@ export default function HistoricoPage() {
       if (filtros.totalMin) params.append('totalMin', filtros.totalMin)
       if (filtros.totalMax) params.append('totalMax', filtros.totalMax)
 
-      const res = await fetch(`/api/orders/history?${params.toString()}`)
-      if (!res.ok) {
-        const error = await res.json()
-        showToast(`❌ ${error.error}`, 'error')
-        return
-      }
-      const data = await res.json()
+      const data = await apiClient(`/api/orders/history?${params.toString()}`, { method: 'GET' }, false)
       setOrders(data)
       const total = data.reduce((acc: number, order: Order) => acc + order.total, 0)
       setTotalGeral(total)
-    } catch (error) {
-      showToast('❌ Erro ao carregar histórico', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao carregar histórico'}`, 'error')
     } finally {
       setLoading(false)
     }

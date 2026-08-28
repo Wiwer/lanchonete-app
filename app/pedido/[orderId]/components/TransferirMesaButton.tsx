@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/app/context/ToastContext'
+import { apiClient } from '@/app/lib/apiClient' // <-- NOVA IMPORTAÇÃO
 
 interface TransferirMesaButtonProps {
   orderId: string
@@ -24,19 +25,14 @@ export default function TransferirMesaButton({
     setCarregando(true)
     setMesaSelecionada(null)
     try {
-      const res = await fetch('/api/tables/free')
-      if (!res.ok) {
-        showToast('❌ Erro ao buscar mesas livres', 'error')
-        return
-      }
-      const data = await res.json()
+      const data = await apiClient('/api/tables/free', { method: 'GET' }, false)
       const livres = data
         .filter((num: number) => num !== currentTableNumber)
         .sort((a: number, b: number) => a - b)
       setMesasLivres(livres)
       setMostrarModal(true)
-    } catch (error) {
-      showToast('❌ Erro ao buscar mesas', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao buscar mesas livres'}`, 'error')
     } finally {
       setCarregando(false)
     }
@@ -45,27 +41,20 @@ export default function TransferirMesaButton({
   const transferir = async (newTableNumber: number) => {
     setCarregando(true)
     try {
-      const res = await fetch('/api/orders', {
+      await apiClient('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'transfer',
           orderId,
           newTableNumber,
         }),
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        showToast(`❌ Erro: ${error.error}`, 'error')
-        return
-      }
+      }, false)
 
       router.refresh()
       setMostrarModal(false)
       showToast(`✅ Conta transferida para a mesa ${newTableNumber}!`, 'success')
-    } catch (error) {
-      showToast('❌ Erro ao transferir', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao transferir'}`, 'error')
     } finally {
       setCarregando(false)
     }

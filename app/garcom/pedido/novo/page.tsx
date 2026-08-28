@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
 import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
+import { apiClient } from '@/app/lib/apiClient' // <-- NOVA IMPORTAÇÃO
 
 interface Product {
   id: string
@@ -38,12 +39,10 @@ export default function GarcomNovoPedidoPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('/api/products?ativos=true')
-        if (!res.ok) throw new Error('Erro ao buscar produtos')
-        const data = await res.json()
+        const data = await apiClient('/api/products?ativos=true', { method: 'GET' }, false)
         setProducts(data)
-      } catch (error) {
-        showToast('❌ Erro ao carregar produtos', 'error')
+      } catch (error: any) {
+        showToast(`❌ ${error.message || 'Erro ao carregar produtos'}`, 'error')
       } finally {
         setLoading(false)
       }
@@ -109,43 +108,32 @@ export default function GarcomNovoPedidoPage() {
 
     setEnviando(true)
     try {
-      const openRes = await fetch('/api/orders', {
+      // Abrir a mesa
+      const order = await apiClient('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'open',
           tableNumber: parseInt(mesaNumber),
         }),
-      })
-      if (!openRes.ok) {
-        const error = await openRes.json()
-        showToast(`❌ ${error.error}`, 'error')
-        return
-      }
-      const order = await openRes.json()
+      }, false)
 
+      // Adicionar cada item do carrinho
       for (const item of cart) {
-        const addRes = await fetch('/api/orders', {
+        await apiClient('/api/orders', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'addItem',
             orderId: order.id,
             productId: item.productId,
             quantity: item.quantity,
           }),
-        })
-        if (!addRes.ok) {
-          const error = await addRes.json()
-          showToast(`❌ Erro ao adicionar ${item.name}: ${error.error}`, 'error')
-          return
-        }
+        }, false)
       }
 
       showToast(`✅ Pedido da mesa ${mesaNumber} enviado com sucesso!`, 'success')
       router.push(`/garcom/pedido/${order.id}`)
-    } catch (error) {
-      showToast('❌ Erro ao enviar pedido', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao enviar pedido'}`, 'error')
     } finally {
       setEnviando(false)
     }

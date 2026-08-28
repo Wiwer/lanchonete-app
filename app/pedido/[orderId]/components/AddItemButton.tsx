@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/app/context/ToastContext'
+import { apiClient } from '@/app/lib/apiClient' // <-- NOVA IMPORTAÇÃO
 
 interface AddItemButtonProps {
   orderId: string
@@ -19,26 +20,19 @@ export default function AddItemButton({
 
   const handleAdd = async () => {
     try {
-      const res = await fetch('/api/orders', {
+      await apiClient('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'addItem',
           orderId,
           productId,
           quantity: 1,
         }),
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        showToast(`❌ ${error.error}`, 'error')
-        return
-      }
+      }, false)
 
       router.refresh()
-    } catch (error) {
-      showToast('❌ Erro ao adicionar item.', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao adicionar item.'}`, 'error')
     }
   }
 

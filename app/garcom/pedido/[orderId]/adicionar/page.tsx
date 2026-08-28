@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
 import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
+import { apiClient } from '@/app/lib/apiClient' // <-- NOVA IMPORTAÇÃO
 
 interface Product {
   id: string
@@ -43,27 +44,22 @@ export default function GarcomAdicionarItensPage() {
   const [loading, setLoading] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [totalPedido, setTotalPedido] = useState(0)
-  const [order, setOrder] = useState<any>(null) // ou defina uma interface Order
+  const [order, setOrder] = useState<any>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const orderRes = await fetch(`/api/orders/${orderId}`)
-        if (!orderRes.ok) {
-          showToast('❌ Erro ao carregar pedido', 'error')
-          return
-        }
-        const order = await orderRes.json()
-        setOrder(order) // se tiver um estado `order`
+        // Buscar pedido
+        const order = await apiClient(`/api/orders/${orderId}`, { method: 'GET' }, false)
+        setOrder(order)
         setOrderItems(order.items || [])
         setTotalPedido(order.total || 0)
 
-        const prodRes = await fetch('/api/products?ativos=true')
-        if (!prodRes.ok) throw new Error('Erro ao buscar produtos')
-        const data = await prodRes.json()
+        // Buscar produtos ativos
+        const data = await apiClient('/api/products?ativos=true', { method: 'GET' }, false)
         setProducts(data)
-      } catch (error) {
-        showToast('❌ Erro ao carregar dados', 'error')
+      } catch (error: any) {
+        showToast(`❌ ${error.message || 'Erro ao carregar dados'}`, 'error')
       } finally {
         setLoading(false)
       }
@@ -124,26 +120,20 @@ export default function GarcomAdicionarItensPage() {
     setEnviando(true)
     try {
       for (const item of cart) {
-        const addRes = await fetch('/api/orders', {
+        await apiClient('/api/orders', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'addItem',
             orderId: orderId,
             productId: item.productId,
             quantity: item.quantity,
           }),
-        })
-        if (!addRes.ok) {
-          const error = await addRes.json()
-          showToast(`❌ Erro ao adicionar ${item.name}: ${error.error}`, 'error')
-          return
-        }
+        }, false)
       }
       showToast('✅ Novos itens adicionados com sucesso!', 'success')
       router.push(`/garcom/pedido/${orderId}`)
-    } catch (error) {
-      showToast('❌ Erro ao adicionar itens', 'error')
+    } catch (error: any) {
+      showToast(`❌ ${error.message || 'Erro ao adicionar itens'}`, 'error')
     } finally {
       setEnviando(false)
     }

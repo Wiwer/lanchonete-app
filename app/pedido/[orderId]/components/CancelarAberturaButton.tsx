@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/app/context/ToastContext'
+import { apiClient } from '@/app/lib/apiClient' // <-- NOVA IMPORTAÇÃO
 
 interface CancelarAberturaButtonProps {
   orderId: string
@@ -35,30 +36,22 @@ export default function CancelarAberturaButton({
     setErro('')
 
     try {
-      const res = await fetch('/api/orders', {
+      await apiClient('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'cancel',
           orderId,
           password: senha,
         }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        setErro(data.error || 'Senha inválida. Tente novamente.')
-        setSenha('')
-        return
-      }
+      }, false) // não mostrar toast automaticamente
 
       setShowModal(false)
       setSenha('')
       showToast(`✅ Mesa ${tableNumber} cancelada com sucesso!`, 'success')
       router.push('/mesas')
-    } catch (error) {
-      setErro('Erro ao cancelar. Tente novamente.')
+    } catch (error: any) {
+      const errorMessage = error.message || 'Erro ao cancelar. Tente novamente.'
+      setErro(errorMessage)
       setSenha('')
     } finally {
       setLoading(false)
