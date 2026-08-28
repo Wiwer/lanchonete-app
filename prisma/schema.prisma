@@ -6,76 +6,120 @@ datasource db {
   provider = "sqlite"
 }
 
-
 model Category {
-  id        String   @id @default(cuid())
-  name      String   @unique
+  id          String    @id @default(cuid())
+  name        String    @unique
   description String?
-  order       Int      @default(0) // <-- Ordenação categorias
-  products  Product[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  order       Int       @default(0) // <-- Ordenação categorias
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Product {
-  id         String   @id @default(cuid())
-  name       String   @unique
-  description String?  // <-- NOVO: descrição opcional
-  price      Float
-  active     Boolean  @default(true)
-  categoryId String?   // Chave estrangeira para Category (pode ser nulo)
-  category   Category? @relation(fields: [categoryId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  items      OrderItem[]
+  id            String              @id @default(cuid())
+  name          String              @unique
+  description   String? // <-- NOVO: descrição opcional
+  price         Float
+  active        Boolean             @default(true)
+  categoryId    String? // Chave estrangeira para Category (pode ser nulo)
+  category      Category?           @relation(fields: [categoryId], references: [id])
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  items         OrderItem[]
+  deliveryItems DeliveryOrderItem[] // <-- NOVA RELAÇÃO
 }
 
 model Table {
   id        String   @id @default(cuid())
   number    Int      @unique
   createdAt DateTime @default(now())
-  orders    Order[]  // Uma mesa pode ter vários pedidos (histórico)
+  orders    Order[] // Uma mesa pode ter vários pedidos (histórico)
 }
 
 model Order {
-  id        String      @id @default(cuid())
-  orderNumber Int      @default(0) // NOVO
-  tableId   String
-  table     Table       @relation(fields: [tableId], references: [id])
-  status    OrderStatus @default(OPEN)
-  total     Float       @default(0)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  items     OrderItem[]
+  id          String      @id @default(cuid())
+  orderNumber Int         @default(0) // NOVO
+  tableId     String
+  table       Table       @relation(fields: [tableId], references: [id])
+  status      OrderStatus @default(OPEN)
+  total       Float       @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       OrderItem[]
 }
 
 model OrderSequence {
-  id          String   @id @default(cuid())
-  date        String   @unique // formato "YYYY-MM-DD"
-  lastNumber  Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  date       String   @unique // formato "YYYY-MM-DD"
+  lastNumber Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model OrderItem {
-  id         String   @id @default(cuid())
-  quantity   Int      @default(1)
-  unitPrice  Float    // Preço do produto no momento do pedido (congelado)
-  orderId    String
-  productId  String
-  order      Order    @relation(fields: [orderId], references: [id])
-  product    Product  @relation(fields: [productId], references: [id])
+  id        String  @id @default(cuid())
+  quantity  Int     @default(1)
+  unitPrice Float // Preço do produto no momento do pedido (congelado)
+  orderId   String
+  productId String
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 model GerenteConfig {
-  id        String   @id  // <-- remova @default("single")
-  senha     String   // senha do gerente (em texto plano, mas depois podemos melhorar)
+  id        String   @id // <-- remova @default("single")
+  senha     String // senha do gerente (em texto plano, mas depois podemos melhorar)
   updatedAt DateTime @updatedAt
 }
 
 model SystemConfig {
   id          String   @id @default("single")
   maintenance Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+}
+
+model DeliveryOrder {
+  id          String              @id @default(cuid())
+  cliente     String
+  telefone    String
+  endereco    String
+  complemento String?
+  referencia  String?
+  status      DeliveryStatus      @default(PENDENTE)
+  pagamento   String? // "Dinheiro", "Cartão", "Pix", etc.
+  observacao  String?
+  total       Float               @default(0)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  items       DeliveryOrderItem[]
+  orderNumber Int @default(0)
+}
+
+model DeliveryOrderItem {
+  id         String        @id @default(cuid())
+  quantity   Int           @default(1)
+  unitPrice  Float
+  productId  String
+  product    Product       @relation(fields: [productId], references: [id])
+  orderId    String
+  order      DeliveryOrder @relation(fields: [orderId], references: [id])
+  observacao String?
+}
+
+enum DeliveryStatus {
+  PENDENTE
+  EM_PREPARO
+  SAIU_PARA_ENTREGA
+  ENTREGUE
+  CANCELADO
+}
+
+model DeliveryOrderSequence {
+  id          String   @id @default(cuid())
+  date        String   @unique // formato "YYYY-MM-DD"
+  lastNumber  Int      @default(0)
+  createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 

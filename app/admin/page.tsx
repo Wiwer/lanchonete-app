@@ -97,10 +97,9 @@ export default function AdminPage() {
           </div>
         </Link>
         <Link
-          href="#"
-          className="relative bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow flex items-center gap-4 opacity-75 cursor-not-allowed"
+          href="/delivery"
+          className="relative bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow flex items-center gap-4"
         >
-        <BadgeEmBreve />
           <span className="text-5xl">🛵</span>
           <div>
             <h2 className="text-2xl font-bold text-gray-800">Delivery</h2>

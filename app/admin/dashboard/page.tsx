@@ -34,10 +34,11 @@ export default function DashboardPage() {
   const { showToast } = useToast()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [tipo, setTipo] = useState<'todos' | 'mesa' | 'delivery'>('todos')
 
   const fetchDashboard = async () => {
     try {
-      const res = await fetch('/api/dashboard')
+      const res = await fetch(`/api/dashboard?tipo=${tipo}`)
       if (!res.ok) {
         const error = await res.json()
         showToast(`❌ ${error.error}`, 'error')
@@ -53,8 +54,9 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
+    setLoading(true)
     fetchDashboard()
-  }, [])
+  }, [tipo])
 
   if (loading) {
     return (
@@ -72,7 +74,6 @@ export default function DashboardPage() {
     )
   }
 
-  // Formatação de variação percentual
   const formatChange = (change: number) => {
     if (change === 0) return '↔️ 0%'
     const sign = change > 0 ? '📈' : '📉'
@@ -94,18 +95,50 @@ export default function DashboardPage() {
               <span className="text-4xl">📊</span>
               <h1 className="text-3xl font-bold text-gray-800">Dashboard de Vendas</h1>
             </div>
-            <Link
-              href="/admin"
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium flex items-center gap-2"
-            >
-              ← Voltar ao Admin
-            </Link>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500">Filtrar por:</span>
+              <button
+                onClick={() => setTipo('todos')}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  tipo === 'todos'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Todos
+              </button>
+              <button
+                onClick={() => setTipo('mesa')}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  tipo === 'mesa'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Salão
+              </button>
+              <button
+                onClick={() => setTipo('delivery')}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  tipo === 'delivery'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Delivery
+              </button>
+              <Link
+                href="/admin"
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors text-gray-700 font-medium flex items-center gap-2"
+              >
+                ← Voltar ao Admin
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Cards métricos */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          {/* Dia */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -121,7 +154,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Semana */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -137,7 +169,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Mês */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -156,7 +187,6 @@ export default function DashboardPage() {
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Gráfico de barras - Vendas últimos 7 dias */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-lg font-semibold text-gray-700 mb-4">📊 Vendas dos Últimos 7 Dias</h2>
             <div className="h-64">
@@ -174,7 +204,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Gráfico de pizza - Categorias */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-lg font-semibold text-gray-700 mb-4">🍽️ Vendas por Categoria</h2>
             {data.categorySales.length === 0 ? (
@@ -188,7 +217,7 @@ export default function DashboardPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name}: ${percent ? (percent * 100).toFixed(0) : 0}%`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
@@ -205,7 +234,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Gráfico de Pedidos por Hora */}
         <div className="mt-6 bg-white rounded-xl shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">🕐 Distribuição de Pedidos por Hora (últimos 7 dias)</h2>
           <div className="h-64">

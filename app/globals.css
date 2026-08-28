@@ -87,3 +87,15 @@ body {
     print-color-adjust: exact !important;
   }
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+  .print\:block {
+    display: block !important;
+  }
+}
