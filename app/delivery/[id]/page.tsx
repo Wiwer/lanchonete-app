@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
 import { apiClient } from '@/app/lib/apiClient'
+import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
 
 interface DeliveryItem {
   id: string
@@ -17,6 +18,7 @@ interface DeliveryItem {
 
 interface DeliveryOrder {
   id: string
+  orderNumber: number
   cliente: string
   telefone: string
   endereco: string
@@ -135,7 +137,7 @@ export default function DeliveryDetalhesPage() {
             <div className="flex items-center gap-3">
               <span className="text-4xl">🛵</span>
               <h1 className="text-2xl font-bold text-gray-800">
-                Pedido #{order.id.slice(0, 6)}
+                Pedido #{formatOrderNumber(order.orderNumber, new Date(order.createdAt))}
               </h1>
               <span
                 className={`px-3 py-1 rounded-full text-sm font-semibold ${statusColors[order.status]}`}
@@ -191,10 +193,10 @@ export default function DeliveryDetalhesPage() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Itens</span>
-                <span className="font-medium">{order.items.length}</span>
+                <span className="font-medium text-gray-700">{order.items.length}</span>
               </div>
-              <div className="flex justify-between items-center border-t pt-2">
-                <span className="text-lg font-semibold">Total</span>
+              <div className="flex justify-between items-center border-t pt-2 text-green-700">
+                <span className="text-2xl font-bold">Total</span>
                 <span className="text-2xl font-bold text-green-700">R$ {order.total.toFixed(2)}</span>
               </div>
             </div>
@@ -232,7 +234,7 @@ export default function DeliveryDetalhesPage() {
           ) : (
             <ul className="divide-y divide-gray-200">
               {order.items.map((item) => (
-                <li key={item.id} className="py-3 flex justify-between items-center">
+                <li key={item.id} className="py-3 flex justify-between items-center text-gray-700">
                   <div>
                     <span className="font-medium">{item.quantity}x</span>
                     <span className="ml-2">{item.product.name}</span>

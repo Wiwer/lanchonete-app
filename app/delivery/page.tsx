@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useToast } from '@/app/context/ToastContext'
 import { apiClient } from '@/app/lib/apiClient'
+import { formatOrderNumber } from '@/app/lib/formatOrderNumber'
 
 interface DeliveryItem {
   id: string
@@ -160,7 +161,7 @@ export default function DeliveryPage() {
                   <div>
                     <div className="flex items-center gap-3">
                       <span className="text-lg font-bold text-gray-800">
-                        {order.cliente}
+                        {formatOrderNumber(order.orderNumber, new Date(order.createdAt))}
                       </span>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColors[order.status]}`}

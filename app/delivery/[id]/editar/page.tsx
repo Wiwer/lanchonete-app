@@ -212,7 +212,7 @@ export default function DeliveryEditarPage() {
             <div className="bg-white rounded-xl shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 🛒 Itens
-                <span className="text-sm font-normal text-gray-500">({cart.length})</span>
+                <span className="text-sm font-normal text-gray-700">({cart.length})</span>
               </h2>
 
               {cart.length === 0 ? (
@@ -220,10 +220,10 @@ export default function DeliveryEditarPage() {
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {cart.map((item) => (
-                    <div key={item.productId} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                    <div key={item.productId} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg ">
                       <div className="flex-1">
-                        <span className="font-medium text-gray-800 text-sm">{item.name}</span>
-                        <div className="flex items-center gap-2 mt-1">
+                        <span className="font-medium text-gray-800 text-sm ">{item.name}</span>
+                        <div className="flex items-center gap-2 mt-1 ">
                           <button
                             type="button"
                             onClick={() => removerDoCarrinho(item.productId)}

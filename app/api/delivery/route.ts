@@ -59,6 +59,21 @@ export async function POST(request: Request) {
 
     // Criar pedido com transação
     const order = await prisma.$transaction(async (tx) => {
+      // Gerar número sequencial do dia
+      const today = new Date()
+      const dateStr = today.toISOString().split('T')[0] // "YYYY-MM-DD"
+
+      const sequence = await tx.deliveryOrderSequence.upsert({
+        where: { date: dateStr },
+        update: {
+          lastNumber: { increment: 1 },
+        },
+        create: {
+          date: dateStr,
+          lastNumber: 1,
+        },
+      })
+
       // Criar o pedido
       const newOrder = await tx.deliveryOrder.create({
         data: {
@@ -71,6 +86,7 @@ export async function POST(request: Request) {
           observacao: observacao || null,
           total,
           status: 'PENDENTE',
+          orderNumber: sequence.lastNumber, // <-- ESSENCIAL
         },
       })
 
